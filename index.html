@@ -1,85 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 引入 Tailwind CSS 以確保大字體與明亮排版生效 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <title>財富防禦管理系統</title>
-</head>
-<body class="bg-white text-slate-900">
+  </head>
+  <body class="bg-white">
     <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useMemo } = React;
-
-        const App = () => {
-            const [finance, setFinance] = useState({ income: 1200000, expense: 600000, roi: 6, targetMonthlyPassive: 50000 });
-            const [insurance, setInsurance] = useState({
-                life: { premium: 0 }, accident: { premium: 0 },
-                medical: { miscReimburse: 0, premium: 0 },
-                majorIllness: { premium: 0 }, cancer: { premium: 0 }, longTermCare: { premium: 0 }
-            });
-
-            const totalPremium = useMemo(() => Object.values(insurance).reduce((acc, curr) => acc + curr.premium, 0), [insurance]);
-            const netSavings = finance.income - finance.expense - totalPremium;
-
-            return (
-                <div className="p-6 md:p-10 max-w-7xl mx-auto">
-                    <header className="mb-10 text-center md:text-left">
-                        <h1 className="text-4xl md:text-5xl font-black text-blue-800">財富防禦管理系統</h1>
-                        <div className="h-2 w-24 bg-blue-500 mt-4 mx-auto md:mx-0 rounded-full"></div>
-                    </header>
-
-                    <main className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-                        <div className="xl:col-span-8 space-y-10">
-                            <section className="bg-slate-50 p-8 rounded-3xl border-2 border-slate-100">
-                                <h2 className="text-2xl font-bold mb-6 text-blue-900">1. 財務現況 (年)</h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div><label className="block text-lg font-semibold mb-2">年收入</label>
-                                    <input type="number" className="w-full text-xl p-4 rounded-xl border-2 border-slate-200" value={finance.income} onChange={e => setFinance({...finance, income: Number(e.target.value)})} /></div>
-                                    <div><label className="block text-lg font-semibold mb-2">生活支出</label>
-                                    <input type="number" className="w-full text-xl p-4 rounded-xl border-2 border-slate-200" value={finance.expense} onChange={e => setFinance({...finance, expense: Number(e.target.value)})} /></div>
-                                </div>
-                            </section>
-
-                            <section className="bg-white p-8 rounded-3xl border-2 border-blue-100 shadow-sm">
-                                <h2 className="text-2xl font-bold mb-6 text-blue-700">2. 六大險種保費與保障</h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div><label className="text-base font-medium text-red-600">醫療雜費限額(實支)</label>
-                                    <input type="number" className="w-full text-lg p-3 mt-1 border-2 border-red-200 rounded-xl" onChange={e => setInsurance({...insurance, medical: {...insurance.medical, miscReimburse: Number(e.target.value)}})} /></div>
-                                    <div><label className="text-base font-medium font-bold text-indigo-700 underline">總年繳保費</label>
-                                    <input type="number" className="w-full text-lg p-3 mt-1 border-2 border-indigo-500 rounded-xl bg-indigo-50" onChange={e => setInsurance({...insurance, medical: {...insurance.medical, premium: Number(e.target.value)}})} /></div>
-                                </div>
-                            </section>
-                        </div>
-
-                        <div className="xl:col-span-4">
-                            <section className="bg-blue-900 text-white p-8 rounded-[2rem] shadow-2xl sticky top-10">
-                                <h2 className="text-3xl font-black mb-8">財務診斷</h2>
-                                <div className="space-y-6">
-                                    <div className="bg-blue-800/50 p-6 rounded-2xl border border-blue-700">
-                                        <p className="text-blue-200 font-bold text-sm">年淨結餘 (財富種子)</p>
-                                        <p className={`text-4xl font-mono font-bold mt-1 ${netSavings < 0 ? 'text-red-400' : 'text-green-400'}`}>${netSavings.toLocaleString()}</p>
-                                    </div>
-                                    <div className="pt-6 space-y-4">
-                                        <h3 className="text-lg font-bold text-blue-100 italic">🔍 客觀診斷討論</h3>
-                                        {insurance.medical.miscReimburse < 200000 && <div className="p-4 bg-red-500/20 border-l-4 border-red-500 rounded-r-lg text-sm">⚠️ 醫療雜費不足：目前自費醫材昂貴，低於 20 萬風險極高。</div>}
-                                        {netSavings < 0 && <div className="p-4 bg-red-500/20 border-l-4 border-red-500 rounded-r-lg text-sm">❌ 財務結構崩潰：支出已超過收入。</div>}
-                                        {netSavings > 0 && <div className="p-4 bg-green-500/20 border-l-4 border-green-500 rounded-r-lg text-sm">✅ 結餘為正，具備複利增長基礎。</div>}
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-                    </main>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
+    <!-- 指向程式啟動點 -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
