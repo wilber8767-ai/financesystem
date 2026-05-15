@@ -24,118 +24,117 @@ document.head.appendChild(l);
 if (!document.getElementById(‘rsp-style’)) {
 const st = document.createElement(‘style’);
 st.id = ‘rsp-style’;
-st.textContent = `
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
-body { font-family: ‘Noto Sans TC’, sans-serif; background: #f1f5f9; }
-* { font-family: ‘Noto Sans TC’, sans-serif; }
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
-input[type=number] { -moz-appearance: textfield; }
-input[type=date] { -webkit-appearance: none; appearance: none; }
-:focus { outline: none; }
-select { appearance: none; -webkit-appearance: none; }
-
-```
-    /* ── Responsive grid helpers ── */
-
-    /* Default (mobile first): 1 column */
-    .grid-2  { display:grid; grid-template-columns:1fr; gap:16px; }
-    .grid-3  { display:grid; grid-template-columns:1fr; gap:14px; }
-    .grid-4  { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-    .grid-6  { display:grid; grid-template-columns:1fr; gap:14px; }
-    .grid-kpi{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-
-    /* Tablet (≥ 640px): 2 columns */
-    @media (min-width:640px) {
-      .grid-2  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
-      .grid-3  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
-      .grid-6  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
-      .grid-kpi{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-    }
-
-    /* Desktop (≥ 960px): full columns */
-    @media (min-width:960px) {
-      .grid-2  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
-      .grid-3  { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
-      .grid-4  { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
-      .grid-6  { grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
-      .grid-kpi{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
-    }
-
-    /* ── Client info: 3-col on wide, 2-col tablet, 1-col mobile ── */
-    .grid-client { display:grid; grid-template-columns:1fr; gap:16px 20px; }
-    @media (min-width:480px) {
-      .grid-client { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    }
-    @media (min-width:960px) {
-      .grid-client { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px 24px; }
-    }
-
-    /* ── Nav: hide premium badge on small screens ── */
-    .nav-premium { display:none; }
-    @media (min-width:560px) { .nav-premium { display:block; } }
-
-    /* ── Nav title sub-line: hide on tiny screens ── */
-    .nav-sub { display:none; }
-    @media (min-width:400px) { .nav-sub { display:block; } }
-
-    /* ── Report header font scale ── */
-    .rpt-title { font-size:20px; }
-    @media (min-width:640px) { .rpt-title { font-size:26px; } }
-    @media (min-width:960px) { .rpt-title { font-size:30px; } }
-
-    /* ── Retirement formula cards: 3 → 1 col ── */
-    .grid-formula { display:grid; grid-template-columns:1fr; gap:12px; }
-    @media (min-width:640px) {
-      .grid-formula { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
-    }
-
-    /* ── Action cards: always 3 but smaller on mobile ── */
-    .grid-action { display:grid; grid-template-columns:1fr; gap:12px; }
-    @media (min-width:560px) {
-      .grid-action { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-    }
-
-    /* ── Gap wall: 2 col on mobile, 4 on desktop ── */
-    .grid-gap { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-    @media (min-width:960px) {
-      .grid-gap { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
-    }
-
-    /* ── Section padding ── */
-    .sec-pad { padding:20px; }
-    @media (min-width:640px) { .sec-pad { padding:28px; } }
-
-    /* ── Big number scaling ── */
-    .num-xl  { font-size:26px; }
-    .num-xxl { font-size:30px; }
-    @media (min-width:640px) {
-      .num-xl  { font-size:34px; }
-      .num-xxl { font-size:34px; }
-    }
-
-    /* ── Prot card grid ── */
-    .grid-prot { display:grid; grid-template-columns:1fr; gap:16px; }
-    @media (min-width:640px) {
-      .grid-prot { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    }
-    @media (min-width:960px) {
-      .grid-prot { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
-    }
-
-    /* ── Report chart height ── */
-    .chart-h { height: 220px; }
-    @media (min-width:640px) { .chart-h { height: 280px; } }
-    @media (min-width:960px) { .chart-h { height: 310px; } }
-
-    /* touch targets */
-    button, select, input { touch-action: manipulation; }
-  `;
-  document.head.appendChild(st);
+st.textContent = [
+‘\n’ +
+’        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n’ +
+’        html { -webkit-text-size-adjust: 100%; }\n’ +
+’        body { font-family: 'Noto Sans TC', sans-serif; background: #f1f5f9; }\n’ +
+’        * { font-family: 'Noto Sans TC', sans-serif; }\n’ +
+’        input[type=number]::-webkit-inner-spin-button,\n’ +
+’        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }\n’ +
+’        input[type=number] { -moz-appearance: textfield; }\n’ +
+’        input[type=date] { -webkit-appearance: none; appearance: none; }\n’ +
+’        :focus { outline: none; }\n’ +
+’        select { appearance: none; -webkit-appearance: none; }\n’ +
+‘\n’ +
+’        /* ── Responsive grid helpers ── */\n’ +
+‘\n’ +
+’        /* Default (mobile first): 1 column */\n’ +
+’        .grid-2  { display:grid; grid-template-columns:1fr; gap:16px; }\n’ +
+’        .grid-3  { display:grid; grid-template-columns:1fr; gap:14px; }\n’ +
+’        .grid-4  { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }\n’ +
+’        .grid-6  { display:grid; grid-template-columns:1fr; gap:14px; }\n’ +
+’        .grid-kpi{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }\n’ +
+‘\n’ +
+’        /* Tablet (≥ 640px): 2 columns */\n’ +
+’        @media (min-width:640px) {\n’ +
+’          .grid-2  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }\n’ +
+’          .grid-3  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }\n’ +
+’          .grid-6  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }\n’ +
+’          .grid-kpi{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* Desktop (≥ 960px): full columns */\n’ +
+’        @media (min-width:960px) {\n’ +
+’          .grid-2  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }\n’ +
+’          .grid-3  { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }\n’ +
+’          .grid-4  { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }\n’ +
+’          .grid-6  { grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }\n’ +
+’          .grid-kpi{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* ── Client info: 3-col on wide, 2-col tablet, 1-col mobile ── */\n’ +
+’        .grid-client { display:grid; grid-template-columns:1fr; gap:16px 20px; }\n’ +
+’        @media (min-width:480px) {\n’ +
+’          .grid-client { grid-template-columns:repeat(2,minmax(0,1fr)); }\n’ +
+’        }\n’ +
+’        @media (min-width:960px) {\n’ +
+’          .grid-client { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px 24px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* ── Nav: hide premium badge on small screens ── */\n’ +
+’        .nav-premium { display:none; }\n’ +
+’        @media (min-width:560px) { .nav-premium { display:block; } }\n’ +
+‘\n’ +
+’        /* ── Nav title sub-line: hide on tiny screens ── */\n’ +
+’        .nav-sub { display:none; }\n’ +
+’        @media (min-width:400px) { .nav-sub { display:block; } }\n’ +
+‘\n’ +
+’        /* ── Report header font scale ── */\n’ +
+’        .rpt-title { font-size:20px; }\n’ +
+’        @media (min-width:640px) { .rpt-title { font-size:26px; } }\n’ +
+’        @media (min-width:960px) { .rpt-title { font-size:30px; } }\n’ +
+‘\n’ +
+’        /* ── Retirement formula cards: 3 → 1 col ── */\n’ +
+’        .grid-formula { display:grid; grid-template-columns:1fr; gap:12px; }\n’ +
+’        @media (min-width:640px) {\n’ +
+’          .grid-formula { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* ── Action cards: always 3 but smaller on mobile ── */\n’ +
+’        .grid-action { display:grid; grid-template-columns:1fr; gap:12px; }\n’ +
+’        @media (min-width:560px) {\n’ +
+’          .grid-action { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* ── Gap wall: 2 col on mobile, 4 on desktop ── */\n’ +
+’        .grid-gap { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }\n’ +
+’        @media (min-width:960px) {\n’ +
+’          .grid-gap { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* ── Section padding ── */\n’ +
+’        .sec-pad { padding:20px; }\n’ +
+’        @media (min-width:640px) { .sec-pad { padding:28px; } }\n’ +
+‘\n’ +
+’        /* ── Big number scaling ── */\n’ +
+’        .num-xl  { font-size:26px; }\n’ +
+’        .num-xxl { font-size:30px; }\n’ +
+’        @media (min-width:640px) {\n’ +
+’          .num-xl  { font-size:34px; }\n’ +
+’          .num-xxl { font-size:34px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* ── Prot card grid ── */\n’ +
+’        .grid-prot { display:grid; grid-template-columns:1fr; gap:16px; }\n’ +
+’        @media (min-width:640px) {\n’ +
+’          .grid-prot { grid-template-columns:repeat(2,minmax(0,1fr)); }\n’ +
+’        }\n’ +
+’        @media (min-width:960px) {\n’ +
+’          .grid-prot { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }\n’ +
+’        }\n’ +
+‘\n’ +
+’        /* ── Report chart height ── */\n’ +
+’        .chart-h { height: 220px; }\n’ +
+’        @media (min-width:640px) { .chart-h { height: 280px; } }\n’ +
+’        @media (min-width:960px) { .chart-h { height: 310px; } }\n’ +
+‘\n’ +
+’        /* touch targets */\n’ +
+’        button, select, input { touch-action: manipulation; }\n’ +
+’      \n’
+].join(’’);
+document.head.appendChild(st);
 }
-```
-
 }, []);
 }
 
@@ -153,21 +152,21 @@ s700:’#334155’, s800:’#1e293b’, s900:’#0f172a’,
 const cardSt: CSSProperties = {
 background:C.white, borderRadius:20,
 boxShadow:‘0 2px 20px rgba(0,0,0,0.08)’,
-border:`1px solid ${C.s200}`, overflow:‘hidden’,
+border:’1px solid ’ + C.s200, overflow:‘hidden’,
 };
 const lblSt: CSSProperties = {
 display:‘block’, color:C.s900, fontWeight:900, fontSize:17, marginBottom:8,
 };
 const bigBase: CSSProperties = {
 display:‘block’, width:‘100%’, minWidth:0, height:54,
-borderRadius:14, border:`2px solid ${C.s200}`, background:C.s50,
+borderRadius:14, border:’2px solid ’ + C.s200, background:C.s50,
 fontSize:24, fontWeight:800, color:C.s900,
 paddingTop:0, paddingBottom:0, paddingLeft:16, paddingRight:16,
 transition:‘border-color .2s, box-shadow .2s’,
 };
 const txtBase: CSSProperties = {
 display:‘block’, width:‘100%’, minWidth:0, height:54,
-borderRadius:14, border:`2px solid ${C.s200}`, background:C.s50,
+borderRadius:14, border:’2px solid ’ + C.s200, background:C.s50,
 fontSize:16, fontWeight:600, color:C.s900,
 paddingTop:0, paddingBottom:0, paddingLeft:16, paddingRight:16,
 transition:‘border-color .2s, box-shadow .2s’,
@@ -204,9 +203,9 @@ if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDat
 return Math.max(a,0);
 };
 const nv  = (s:string) => parseFloat(s)||0;
-const W   = (v:number) => v>=100000000?`${(v/100000000).toFixed(1)}億`:v>=10000?`${(v/10000).toFixed(0)}萬`:v.toLocaleString(‘zh-TW’);
-const $   = (v:number) => `$${Math.round(v).toLocaleString('zh-TW')}`;
-const $W  = (v:number) => `$${W(Math.round(v))}`;
+const W   = (v:number) => v>=100000000?(v/100000000).toFixed(1) + ‘億’:v>=10000?(v/10000).toFixed(0) + ‘萬’:v.toLocaleString(‘zh-TW’);
+const $   = (v:number) => ‘$’ + Math.round(v).toLocaleString(‘zh-TW’);
+const $W  = (v:number) => ‘$’ + W(Math.round(v));
 
 const iC:Client={name:’’,birthdate:’’,gender:’’,occupation:’’,phone:’’,monthlyIncome:’’,monthlyExpense:’’,savings:’’,retirementAge:‘65’,dependents:‘0’};
 const iP:Prot={lifeInsurance:’’,lifeInsurancePremium:’’,accidentDeath:’’,accidentReal:’’,accidentHospitalDaily:’’,accidentPremium:’’,criticalIllness:’’,criticalPremium:’’,cancerLumpsum:’’,cancerChemoDaily:’’,cancerPremium:’’,ltcLumpsum:’’,ltcMonthly:’’,ltcPremium:’’,med:{hospitalDaily:’’,hospitalReal:’’,surgeryLump:’’,surgeryReal:’’,medicalMisc:’’},medicalPremium:’’};
@@ -265,7 +264,7 @@ return(
 // ── Dark section box ──────────────────────────────────────────────────────────
 function DarkBox({children,style}:{children:React.ReactNode;style?:CSSProperties}){
 return(
-<div style={{background:C.s800,borderRadius:20,border:`1px solid ${C.s700}`,…style}}>
+<div style={{background:C.s800,borderRadius:20,border:’1px solid ’ + C.s700,…style}}>
 {children}
 </div>
 );
@@ -331,49 +330,49 @@ const medMiscHave =nv(prot.med.medicalMisc)*10000;
 const accRealHave =nv(prot.accidentReal)*10000;
 const ciHave      =nv(prot.criticalIllness)*10000;
 const gaps=[
-{icon:“🏥’,label:‘醫療住院日額’,std:5000, stdL:‘5,000 元/日’,have:medDailyHave,gap:Math.max(0,5000-medDailyHave),   haveStr:`${medDailyHave.toLocaleString('zh-TW")} 元/日`,gapStr:`-${Math.max(0,5000-medDailyHave).toLocaleString('zh-TW')} 元/日`,note:“定額＋實支合計”},
-{icon:“💊’,label:‘醫療雜費’,    std:300000,stdL:‘30 萬”,     have:medMiscHave, gap:Math.max(0,300000-medMiscHave),  haveStr:`${W(medMiscHave)} 元`,gapStr:`-${W(Math.max(0,300000-medMiscHave))} 元`,note:“新式療法自費上限”},
-{icon:“🚑’,label:‘意外實支’,    std:100000,stdL:‘10 萬”,     have:accRealHave, gap:Math.max(0,100000-accRealHave),  haveStr:`${W(accRealHave)} 元`,gapStr:`-${W(Math.max(0,100000-accRealHave))} 元`,note:“意外傷害醫療費用”},
-{icon:“⚡’,label:‘重大傷病’,    std:2000000,stdL:’200 萬”,   have:ciHave,      gap:Math.max(0,2000000-ciHave),      haveStr:`${W(ciHave)} 元`,gapStr:`-${W(Math.max(0,2000000-ciHave))} 元`,note:“22 類重症確診理賠”},
+{icon:“🏥’,label:‘醫療住院日額’,std:5000, stdL:‘5,000 元/日’,have:medDailyHave,gap:Math.max(0,5000-medDailyHave),   haveStr:medDailyHave.toLocaleString(‘zh-TW”) + ’ 元/日’,gapStr:’-’ + Math.max(0,5000-medDailyHave).toLocaleString(‘zh-TW’) + ’ 元/日’,note:“定額＋實支合計”},
+{icon:“💊’,label:‘醫療雜費’,    std:300000,stdL:‘30 萬”,     have:medMiscHave, gap:Math.max(0,300000-medMiscHave),  haveStr:W(medMiscHave) + ’ 元’,gapStr:’-’ + W(Math.max(0,300000-medMiscHave)) + ’ 元’,note:“新式療法自費上限”},
+{icon:“🚑’,label:‘意外實支’,    std:100000,stdL:‘10 萬”,     have:accRealHave, gap:Math.max(0,100000-accRealHave),  haveStr:W(accRealHave) + ’ 元’,gapStr:’-’ + W(Math.max(0,100000-accRealHave)) + ’ 元’,note:“意外傷害醫療費用”},
+{icon:“⚡’,label:‘重大傷病’,    std:2000000,stdL:‘200 萬”,   have:ciHave,      gap:Math.max(0,2000000-ciHave),      haveStr:W(ciHave) + ’ 元’,gapStr:’-’ + W(Math.max(0,2000000-ciHave)) + ’ 元’,note:“22 類重症確診理賠”},
 ];
 
 // Protection groups (no premium rows)
 const groups=[
 {title:“壽險保障’,color:’#6366f1’,bg:‘rgba(99,102,241,0.12)’,icon:‘🛡️”,items:[
-{k:“壽險身故保額”,v:nv(prot.lifeInsurance)>0?`${W(nv(prot.lifeInsurance)*10000)} 元`:”—”},
+{k:“壽險身故保額”,v:nv(prot.lifeInsurance)>0?W(nv(prot.lifeInsurance)*10000) + ’ 元’:”—”},
 ]},
 {title:“意外保障’,color:’#8b5cf6’,bg:‘rgba(139,92,246,0.12)’,icon:‘⚡”,items:[
-{k:“意外身故保額”,v:nv(prot.accidentDeath)>0?`${W(nv(prot.accidentDeath)*10000)} 元`:”—”},
-{k:“意外實支”,    v:nv(prot.accidentReal)>0?`${W(nv(prot.accidentReal)*10000)} 元`:”—”},
-{k:“意外住院日額’,v:nv(prot.accidentHospitalDaily)>0?`${nv(prot.accidentHospitalDaily).toLocaleString('zh-TW")} 元/日`:”—”},
+{k:“意外身故保額”,v:nv(prot.accidentDeath)>0?W(nv(prot.accidentDeath)*10000) + ’ 元’:”—”},
+{k:“意外實支”,    v:nv(prot.accidentReal)>0?W(nv(prot.accidentReal)*10000) + ’ 元’:”—”},
+{k:“意外住院日額’,v:nv(prot.accidentHospitalDaily)>0?nv(prot.accidentHospitalDaily).toLocaleString(‘zh-TW”) + ’ 元/日’:”—”},
 ]},
 {title:“醫療保障’,color:’#2563eb’,bg:‘rgba(37,99,235,0.12)’,icon:‘🏥”,items:[
-{k:“住院定額’,v:nv(prot.med.hospitalDaily)>0?`${nv(prot.med.hospitalDaily).toLocaleString('zh-TW")} 元/日`:”—”},
-{k:“住院實支’,v:nv(prot.med.hospitalReal)>0?`${nv(prot.med.hospitalReal).toLocaleString('zh-TW")} 元/日`:”—”},
-{k:“手術定額”,v:nv(prot.med.surgeryLump)>0?`${W(nv(prot.med.surgeryLump)*10000)} 元`:”—”},
-{k:“手術實支”,v:nv(prot.med.surgeryReal)>0?`${W(nv(prot.med.surgeryReal)*10000)} 元`:”—”},
-{k:“醫療雜費”,v:nv(prot.med.medicalMisc)>0?`${W(nv(prot.med.medicalMisc)*10000)} 元`:”—”},
+{k:“住院定額’,v:nv(prot.med.hospitalDaily)>0?nv(prot.med.hospitalDaily).toLocaleString(‘zh-TW”) + ’ 元/日’:”—”},
+{k:“住院實支’,v:nv(prot.med.hospitalReal)>0?nv(prot.med.hospitalReal).toLocaleString(‘zh-TW”) + ’ 元/日’:”—”},
+{k:“手術定額”,v:nv(prot.med.surgeryLump)>0?W(nv(prot.med.surgeryLump)*10000) + ’ 元’:”—”},
+{k:“手術實支”,v:nv(prot.med.surgeryReal)>0?W(nv(prot.med.surgeryReal)*10000) + ’ 元’:”—”},
+{k:“醫療雜費”,v:nv(prot.med.medicalMisc)>0?W(nv(prot.med.medicalMisc)*10000) + ’ 元’:”—”},
 ]},
 {title:“重大疾病’,color:’#e11d48’,bg:‘rgba(225,29,72,0.12)’,icon:‘⚠️”,items:[
-{k:“重大傷病”,  v:nv(prot.criticalIllness)>0?`${W(nv(prot.criticalIllness)*10000)} 元`:”—”},
-{k:“癌症一次金”,v:nv(prot.cancerLumpsum)>0?`${W(nv(prot.cancerLumpsum)*10000)} 元`:”—”},
-{k:“化/放療補助’,v:nv(prot.cancerChemoDaily)>0?`${nv(prot.cancerChemoDaily).toLocaleString('zh-TW")} 元/日`:”—”},
+{k:“重大傷病”,  v:nv(prot.criticalIllness)>0?W(nv(prot.criticalIllness)*10000) + ’ 元’:”—”},
+{k:“癌症一次金”,v:nv(prot.cancerLumpsum)>0?W(nv(prot.cancerLumpsum)*10000) + ’ 元’:”—”},
+{k:“化/放療補助’,v:nv(prot.cancerChemoDaily)>0?nv(prot.cancerChemoDaily).toLocaleString(‘zh-TW”) + ’ 元/日’:”—”},
 ]},
 {title:“長照保障’,color:’#059669’,bg:‘rgba(5,150,105,0.12)’,icon:‘🏆”,items:[
-{k:“長照一次金”,v:nv(prot.ltcLumpsum)>0?`${W(nv(prot.ltcLumpsum)*10000)} 元`:”—”},
-{k:“月扶助金’,  v:nv(prot.ltcMonthly)>0?`${nv(prot.ltcMonthly).toLocaleString('zh-TW")} 元/月`:”—”},
+{k:“長照一次金”,v:nv(prot.ltcLumpsum)>0?W(nv(prot.ltcLumpsum)*10000) + ’ 元’:”—”},
+{k:“月扶助金’,  v:nv(prot.ltcMonthly)>0?nv(prot.ltcMonthly).toLocaleString(‘zh-TW”) + ’ 元/月’:”—”},
 ]},
 {title:“養老保障’,color:’#d97706’,bg:‘rgba(217,119,6,0.12)’,icon:‘💰”,items:[
 {k:“年度總保費’,  v:totalPremium>0?$(totalPremium):’—”},
 {k:“月均保費’,    v:totalPremium>0?$(totalPremium/12):’—”},
-{k:“保費占月收入’,v:income>0&&totalPremium>0?`${((totalPremium/12/income)*100).toFixed(1)}%`:’—”},
+{k:“保費占月收入’,v:income>0&&totalPremium>0?((totalPremium/12/income)*100).toFixed(1) + ‘%’:’—”},
 ]},
 ];
 
 const Tip=({active,payload,label}:{active?:boolean;payload?:{name:string;value:number;color:string}[];label?:number})=>{
 if(!active||!payload?.length) return null;
 return(
-<div style={{background:C.s900,border:`1px solid ${C.s700}`,borderRadius:10,padding:‘10px 14px’,minWidth:160}}>
+<div style={{background:C.s900,border:‘1px solid ’ + C.s700,borderRadius:10,padding:‘10px 14px’,minWidth:160}}>
 <div style={{color:C.s400,fontSize:12,fontWeight:600,marginBottom:6}}>{label} 歲</div>
 {payload.map((p,i)=>(
 <div key={i} style={{display:‘flex’,justifyContent:‘space-between’,gap:12,marginBottom:3}}>
@@ -445,7 +444,7 @@ return(
         </div>
 
         {/* Action plan */}
-        <div style={{background:'rgba(0,0,0,0.3)',border:`1px solid ${C.s700}`,borderRadius:14,padding:16}}>
+        <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid ' + C.s700,borderRadius:14,padding:16}}>
           <div style={{color:'#e2e8f0',fontWeight:900,fontSize:15,marginBottom:14,textAlign:'center'}}>
             💡 為了達成目標，您現在需要做的是...
           </div>
@@ -459,7 +458,7 @@ return(
               </div>
             </div>
             {/* 每年需儲蓄 */}
-            <div style={{background:retGap>0?'rgba(225,29,72,0.12)':'rgba(52,211,153,0.1)',border:`2px solid ${retGap>0?'rgba(225,29,72,0.38)':'rgba(52,211,153,0.3)'}`,borderRadius:12,padding:14}}>
+            <div style={{background:retGap>0?'rgba(225,29,72,0.12)':'rgba(52,211,153,0.1)',border:'2px solid ' + retGap>0?'rgba(225,29,72,0.38)':'rgba(52,211,153,0.3)',borderRadius:12,padding:14}}>
               <div style={{color:retGap>0?'#fca5a5':'#6ee7b7',fontSize:11,fontWeight:700,marginBottom:6}}>每年需儲蓄金額</div>
               <div className='num-xl' style={{color:retGap>0?'#fb7185':'#34d399',fontWeight:900}}>
                 {retGap>0?$W(annualNeed):"✅ 已足備"}
@@ -471,7 +470,7 @@ return(
               )}
             </div>
             {/* 每月需儲蓄 */}
-            <div style={{background:retGap>0?'rgba(225,29,72,0.12)':'rgba(52,211,153,0.1)',border:`2px solid ${retGap>0?'rgba(225,29,72,0.38)':'rgba(52,211,153,0.3)'}`,borderRadius:12,padding:14}}>
+            <div style={{background:retGap>0?'rgba(225,29,72,0.12)':'rgba(52,211,153,0.1)',border:'2px solid ' + retGap>0?'rgba(225,29,72,0.38)':'rgba(52,211,153,0.3)',borderRadius:12,padding:14}}>
               <div style={{color:retGap>0?'#fca5a5':'#6ee7b7',fontSize:11,fontWeight:700,marginBottom:6}}>每月需儲蓄金額</div>
               <div className='num-xxl' style={{color:retGap>0?'#fb7185':'#34d399',fontWeight:900}}>
                 {retGap>0?$(monthlyNeed):"✅ 已足備"}
@@ -482,7 +481,7 @@ return(
                 </div>
               )}
               <div style={{color:C.s500,fontSize:11,marginTop:6}}>
-                {retGap>0?`現月儲 ${$(realMonthlySave)}，缺 ${$(Math.max(0,monthlyNeed-realMonthlySave))}/月`:"繼續保持！"}
+                {retGap>0?'現月儲 ' + $(realMonthlySave) + '，缺 ' + $(Math.max(0,monthlyNeed-realMonthlySave)) + '/月':"繼續保持！"}
               </div>
             </div>
           </div>
@@ -513,7 +512,7 @@ return(
         <div style={{display:'flex',gap:16,marginBottom:10,flexWrap:'wrap'}}>
           {[{c:'#6366f1',l:"資產規模'},{c:'#fb7185',l:'年度支出",dash:true}].map(x=>(
             <div key={x.l} style={{display:'flex',alignItems:'center',gap:6}}>
-              <div style={{width:20,height:3,background:x.dash?`repeating-linear-gradient(90deg,${x.c} 0,${x.c} 4px,transparent 4px,transparent 8px)`:x.c,borderRadius:2}}/>
+              <div style={{width:20,height:3,background:x.dash?'repeating-linear-gradient(90deg,' + x.c + ' 0,' + x.c + ' 4px,transparent 4px,transparent 8px)':x.c,borderRadius:2}}/>
               <span style={{color:C.s400,fontSize:12}}>{x.l}</span>
             </div>
           ))}
@@ -537,10 +536,10 @@ return(
               <YAxis stroke={C.s600} tick={{fill:C.s400,fontSize:10}} tickFormatter={$W} width={60}/>
               <Tooltip content={<Tip/>}/>
               <ReferenceLine x={retAge} stroke='#fbbf24' strokeDasharray='4 3'
-                label={{value:`退休`,position:'insideTopRight',fill:'#fbbf24',fontSize:11}}/>
+                label={{value:'退休',position:'insideTopRight',fill:'#fbbf24',fontSize:11}}/>
               {depleteAge&&depleteY>0&&(
                 <ReferenceDot x={depleteAge-1} y={depleteY} r={8} fill='#e11d48' stroke='#fff' strokeWidth={2}
-                  label={{value:`${depleteAge}歲`,position:'top',fill:'#fb7185',fontSize:11,fontWeight:700}}/>
+                  label={{value:depleteAge + '歲',position:'top',fill:'#fb7185',fontSize:11,fontWeight:700}}/>
               )}
               <Area type='monotone' dataKey="資產規模' stroke='#6366f1' strokeWidth={3} fill='url(#ag)"/>
               <Area type='monotone' dataKey="年度支出' stroke='#fb7185' strokeWidth={2} strokeDasharray='4 3' fill='url(#eg)"/>
@@ -573,7 +572,7 @@ return(
                   現有：<span style={{color:ok?'#34d399':'#cbd5e1',fontWeight:700}}>{item.have>0?item.haveStr:"未投保"}</span>
                 </div>
                 <div style={{height:7,background:'rgba(255,255,255,0.08)',borderRadius:999,overflow:'hidden',marginBottom:10}}>
-                  <div style={{height:'100%',width:`${pct}%`,background:ok?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#e11d48,#fb7185)',borderRadius:999}}/>
+                  <div style={{height:'100%',width:pct + '%',background:ok?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#e11d48,#fb7185)',borderRadius:999}}/>
                 </div>
                 <div style={{fontWeight:900,fontSize:ok?17:22,color:ok?'#34d399':'#fb7185',lineHeight:1.1}}>
                   {ok?"✅ 已足備":item.gapStr}
@@ -606,8 +605,8 @@ return(
 
         <div className='grid-6'>
           {groups.map(grp=>(
-            <div key={grp.title} style={{background:grp.bg,border:`1px solid ${grp.color}40`,borderRadius:14,overflow:'hidden'}}>
-              <div style={{background:`${grp.color}22`,borderBottom:`1px solid ${grp.color}40`,padding:'10px 16px',display:'flex',alignItems:'center',gap:8}}>
+            <div key={grp.title} style={{background:grp.bg,border:'1px solid ' + grp.color + '40',borderRadius:14,overflow:'hidden'}}>
+              <div style={{background:grp.color + '22',borderBottom:'1px solid ' + grp.color + '40',padding:'10px 16px',display:'flex',alignItems:'center',gap:8}}>
                 <span style={{fontSize:16}}>{grp.icon}</span>
                 <span style={{color:grp.color,fontWeight:900,fontSize:15}}>{grp.title}</span>
               </div>
@@ -626,7 +625,7 @@ return(
     </DarkBox>
 
     {/* Disclaimer */}
-    <div style={{background:'rgba(255,255,255,0.03)',border:`1px solid ${C.s700}`,borderRadius:12,padding:'12px 16px',textAlign:'center'}}>
+    <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid ' + C.s700,borderRadius:12,padding:'12px 16px',textAlign:'center'}}>
       <p style={{color:C.s600,fontSize:11,lineHeight:1.9}}>
         本報告僅供參考，實際保障內容以各保險契約條款為準。<br/>
         退休缺口試算採通膨假設 2.5%、資產成長率 5%，不代表實際投資績效保證。
@@ -729,7 +728,7 @@ content:(
 <span style={{color:r.col,fontWeight:900,fontSize:17}}>{r.val>0?$(r.val):”—”}</span>
 </div>
 ))}
-<div style={{borderTop:`1px solid ${C.s200}`,paddingTop:12,marginTop:4}}>
+<div style={{borderTop:’1px solid ’ + C.s200,paddingTop:12,marginTop:4}}>
 <div style={{display:‘flex’,justifyContent:‘space-between’,alignItems:‘center’}}>
 <span style={{color:C.s900,fontWeight:900,fontSize:18}}>年度總計</span>
 <span style={{color:C.amber,fontWeight:900,fontSize:26}}>{$(totalPremium)}</span>
@@ -772,7 +771,7 @@ return(
   <div style={{maxWidth:1200,margin:'0 auto',padding:'16px 16px',display:'flex',flexDirection:'column',gap:16}}>
 
     {/* Client Info */}
-    <div style={{...cardSt,borderLeft:`8px solid ${C.indigo}`}}>
+    <div style={{...cardSt,borderLeft:'8px solid ' + C.indigo}}>
       <div className='sec-pad'>
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
           <div style={{background:'#eef2ff',borderRadius:12,width:42,height:42,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>👤</div>
@@ -785,13 +784,13 @@ return(
           <div style={gCell}><label style={lblSt}>性別</label><SI value={client.gender} onChange={sc('gender')} opts={[{value:'',label:"請選擇'},{value:'male',label:'男性'},{value:'female',label:'女性"}]}/></div>
           <div style={gCell}><label style={lblSt}>職業</label><TI value={client.occupation} onChange={sc('occupation')} placeholder="例：工程師"/></div>
           <div style={gCell}><label style={lblSt}>聯絡電話</label><TI value={client.phone} onChange={sc('phone')} placeholder='0912-345-678'/></div>
-          <div style={gCell}><label style={lblSt}>扶養人數</label><SI value={client.dependents} onChange={sc('dependents')} opts={['0','1','2','3','4','5+'].map(v=>({value:v,label:`${v} 人`}))}/></div>
+          <div style={gCell}><label style={lblSt}>扶養人數</label><SI value={client.dependents} onChange={sc('dependents')} opts={['0','1','2','3','4','5+'].map(v=>({value:v,label:v + ' 人'}))}/></div>
         </div>
       </div>
     </div>
 
     {/* Finance */}
-    <div style={{...cardSt,borderLeft:`8px solid ${C.violet}`}}>
+    <div style={{...cardSt,borderLeft:'8px solid ' + C.violet}}>
       <div className='sec-pad'>
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
           <div style={{background:'#f5f3ff',borderRadius:12,width:42,height:42,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📈</div>
@@ -805,16 +804,16 @@ return(
             <div style={gCell}><label style={lblSt}>現有儲蓄（元）</label><FI value={client.savings} onChange={sc('savings')} pre='$'/></div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:16}}>
-            <div style={gCell}><label style={lblSt}>預計退休年齡</label><SI value={client.retirementAge} onChange={sc('retirementAge')} opts={[55,58,60,62,65,67,70].map(v=>({value:String(v),label:`${v} 歲`}))}/></div>
+            <div style={gCell}><label style={lblSt}>預計退休年齡</label><SI value={client.retirementAge} onChange={sc('retirementAge')} opts={[55,58,60,62,65,67,70].map(v=>({value:String(v),label:v + ' 歲'}))}/></div>
             {income>0&&(
-              <div style={{background:'linear-gradient(135deg,#faf5ff,#f0fdf4)',border:`1px solid ${C.s200}`,borderRadius:14,padding:16}}>
+              <div style={{background:'linear-gradient(135deg,#faf5ff,#f0fdf4)',border:'1px solid ' + C.s200,borderRadius:14,padding:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
                   <span style={{color:C.s900,fontWeight:900,fontSize:16}}>收支比分析</span>
                   <span style={{fontWeight:900,fontSize:15,color:savingsRate>=20?C.emerald:C.rose}}>儲蓄率 {savingsRate.toFixed(1)}%</span>
                 </div>
                 <div style={{height:18,background:C.s200,borderRadius:999,overflow:'hidden',display:'flex'}}>
-                  <div style={{width:`${Math.min((expense/income)*100,100)}%`,background:'linear-gradient(90deg,#f43f5e,#fb7185)',transition:'width .5s'}}/>
-                  <div style={{width:`${Math.max(savingsRate,0)}%`,background:'linear-gradient(90deg,#10b981,#34d399)',transition:'width .5s'}}/>
+                  <div style={{width:Math.min((expense/income)*100,100) + '%',background:'linear-gradient(90deg,#f43f5e,#fb7185)',transition:'width .5s'}}/>
+                  <div style={{width:Math.max(savingsRate,0) + '%',background:'linear-gradient(90deg,#10b981,#34d399)',transition:'width .5s'}}/>
                 </div>
                 <div style={{display:'flex',gap:14,marginTop:8,fontSize:13,fontWeight:600,flexWrap:'wrap'}}>
                   <span style={{color:C.rose}}>🔴 支出 {$(expense)}</span>
