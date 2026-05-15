@@ -1,1229 +1,858 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, CSSProperties } from “react”;
 import {
-  Shield,
-  Heart,
-  Activity,
-  Zap,
-  Star,
-  TrendingUp,
-  User,
-  FileText,
-  ChevronRight,
-  AlertTriangle,
-  CheckCircle,
-  DollarSign,
-  Calendar,
-  Phone,
-  Award,
-  BarChart2,
-  PieChart as PieChartIcon,
-  ArrowLeft,
-} from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
+AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+ResponsiveContainer, ReferenceLine, ReferenceDot,
+} from “recharts”;
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-interface ClientInfo {
-  name: string;
-  birthdate: string;
-  gender: "male" | "female" | "";
-  occupation: string;
-  phone: string;
-  monthlyIncome: string;
-  monthlyExpense: string;
-  savings: string;
-  retirementAge: string;
-  dependents: string;
+// ── Global styles + Tailwind CDN + Responsive CSS ────────────────────────────
+function useGlobalStyles() {
+useEffect(() => {
+// Tailwind CDN
+if (!document.getElementById(“tw-cdn”)) {
+const s = document.createElement(“script”);
+s.id = “tw-cdn”; s.src = “https://cdn.tailwindcss.com”; s.async = true;
+document.head.appendChild(s);
 }
-
-interface MedicalCoverage {
-  hospitalDaily: string;
-  hospitalReal: string;
-  surgery: string;
-  medicalMisc: string;
+// Google Fonts
+if (!document.getElementById(“gfont”)) {
+const l = document.createElement(“link”);
+l.id = “gfont”; l.rel = “stylesheet”;
+l.href = “https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap”;
+document.head.appendChild(l);
 }
+// Base + Responsive CSS
+if (!document.getElementById(“rsp-style”)) {
+const st = document.createElement(“style”);
+st.id = “rsp-style”;
+st.textContent = `
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: ‘Noto Sans TC’, sans-serif; background: #f1f5f9; }
+* { font-family: ‘Noto Sans TC’, sans-serif; }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type=number] { -moz-appearance: textfield; }
+input[type=date] { -webkit-appearance: none; appearance: none; }
+:focus { outline: none; }
+select { appearance: none; -webkit-appearance: none; }
 
-interface ProtectionData {
-  lifeInsurance: string;
-  lifeInsurancePremium: string;
-  accidentDeath: string;
-  accidentReal: string;
-  accidentPremium: string;
-  criticalIllness: string;
-  criticalPremium: string;
-  cancerLumpsum: string;
-  cancerChemo: string;
-  cancerPremium: string;
-  ltcLumpsum: string;
-  ltcMonthly: string;
-  ltcPremium: string;
-  medicalCoverage: MedicalCoverage;
-  medicalPremium: string;
-}
+```
+    /* ── Responsive grid helpers ── */
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-const calcAge = (birthdate: string): number => {
-  if (!birthdate) return 0;
-  const today = new Date();
-  const birth = new Date(birthdate);
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age > 0 ? age : 0;
-};
+    /* Default (mobile first): 1 column */
+    .grid-2  { display:grid; grid-template-columns:1fr; gap:16px; }
+    .grid-3  { display:grid; grid-template-columns:1fr; gap:14px; }
+    .grid-4  { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .grid-6  { display:grid; grid-template-columns:1fr; gap:14px; }
+    .grid-kpi{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 
-const fmt = (val: string | number): string => {
-  const n = typeof val === "string" ? parseFloat(val) || 0 : val;
-  if (n >= 10000) return `${(n / 10000).toFixed(0)}萬`;
-  return n.toLocaleString("zh-TW");
-};
-
-const num = (s: string): number => parseFloat(s) || 0;
-
-// ─── Initial State ────────────────────────────────────────────────────────────
-const initClient: ClientInfo = {
-  name: "",
-  birthdate: "",
-  gender: "",
-  occupation: "",
-  phone: "",
-  monthlyIncome: "",
-  monthlyExpense: "",
-  savings: "",
-  retirementAge: "65",
-  dependents: "0",
-};
-
-const initProtection: ProtectionData = {
-  lifeInsurance: "",
-  lifeInsurancePremium: "",
-  accidentDeath: "",
-  accidentReal: "",
-  accidentPremium: "",
-  criticalIllness: "",
-  criticalPremium: "",
-  cancerLumpsum: "",
-  cancerChemo: "",
-  cancerPremium: "",
-  ltcLumpsum: "",
-  ltcMonthly: "",
-  ltcPremium: "",
-  medicalCoverage: {
-    hospitalDaily: "",
-    hospitalReal: "",
-    surgery: "",
-    medicalMisc: "",
-  },
-  medicalPremium: "",
-};
-
-// ─── Sub-components ──────────────────────────────────────────────────────────
-const SectionCard = ({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <div
-    className={`bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden ${className}`}
-  >
-    {children}
-  </div>
-);
-
-const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <label className="block text-slate-900 font-black text-lg mb-1.5">
-    {children}
-  </label>
-);
-
-const BigInput = ({
-  value,
-  onChange,
-  placeholder = "0",
-  prefix,
-  suffix,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  prefix?: string;
-  suffix?: string;
-}) => (
-  <div className="relative flex items-center">
-    {prefix && (
-      <span className="absolute left-4 text-slate-400 font-semibold text-xl pointer-events-none">
-        {prefix}
-      </span>
-    )}
-    <input
-      type="number"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={`w-full h-14 rounded-xl border-2 border-slate-200 bg-slate-50 text-3xl font-bold text-slate-800 
-        focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-offset-2 focus:border-indigo-500 
-        transition-all duration-200
-        ${prefix ? "pl-9 pr-4" : suffix ? "pl-4 pr-10" : "px-4"}`}
-    />
-    {suffix && (
-      <span className="absolute right-4 text-slate-400 font-semibold text-lg pointer-events-none">
-        {suffix}
-      </span>
-    )}
-  </div>
-);
-
-const TextInput = ({
-  value,
-  onChange,
-  placeholder = "",
-  type = "text",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-}) => (
-  <input
-    type={type}
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    placeholder={placeholder}
-    className="w-full h-14 rounded-xl border-2 border-slate-200 bg-slate-50 text-xl font-semibold text-slate-800 px-4
-      focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-offset-2 focus:border-indigo-500 
-      transition-all duration-200"
-  />
-);
-
-const BigSelect = ({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) => (
-  <select
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className="w-full h-14 rounded-xl border-2 border-slate-200 bg-slate-50 text-xl font-semibold text-slate-800 px-4
-      focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-offset-2 focus:border-indigo-500 
-      transition-all duration-200 cursor-pointer"
-  >
-    {options.map((o) => (
-      <option key={o.value} value={o.value}>
-        {o.label}
-      </option>
-    ))}
-  </select>
-);
-
-// ─── Protection Card ──────────────────────────────────────────────────────────
-const ProtectionCard = ({
-  color,
-  icon,
-  title,
-  subtitle,
-  children,
-}: {
-  color: string;
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) => (
-  <div
-    className={`bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden 
-    hover:shadow-2xl transition-all duration-300 hover:-translate-y-1`}
-  >
-    <div className={`${color} px-5 py-4 flex items-center gap-3`}>
-      <div className="bg-white/20 rounded-xl p-2">{icon}</div>
-      <div>
-        <div className="text-white font-black text-xl">{title}</div>
-        <div className="text-white/80 text-sm font-medium">{subtitle}</div>
-      </div>
-    </div>
-    <div className="p-5 space-y-4">{children}</div>
-  </div>
-);
-
-// ─── Stat Badge ───────────────────────────────────────────────────────────────
-const StatBadge = ({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: string;
-}) => (
-  <div className={`${color} rounded-xl px-4 py-3 text-center`}>
-    <div className="text-white/80 text-sm font-semibold">{label}</div>
-    <div className="text-white font-black text-2xl mt-0.5">{value}</div>
-  </div>
-);
-
-// ─── Report Page ──────────────────────────────────────────────────────────────
-const ReportPage = ({
-  client,
-  protection,
-  onBack,
-}: {
-  client: ClientInfo;
-  protection: ProtectionData;
-  onBack: () => void;
-}) => {
-  const age = calcAge(client.birthdate);
-  const income = num(client.monthlyIncome);
-  const expense = num(client.monthlyExpense);
-  const savings = num(client.savings);
-  const retirementAge = num(client.retirementAge) || 65;
-  const monthlySave = income - expense;
-  const savingsRate = income > 0 ? (monthlySave / income) * 100 : 0;
-  const yearsToRetire = Math.max(retirementAge - age, 0);
-  const annualSave = monthlySave * 12;
-  const growthRate = 0.05;
-
-  // Asset growth data
-  const assetData = useMemo(() => {
-    const data = [];
-    let asset = savings;
-    const retirementExpense = expense * 12 * 1.2;
-    for (let yr = age; yr <= 85; yr++) {
-      data.push({
-        age: yr,
-        資產: Math.round(asset),
-        目標線: Math.round(retirementExpense * (85 - retirementAge) * 1.1),
-      });
-      if (yr < retirementAge) {
-        asset = asset * (1 + growthRate) + annualSave;
-      } else {
-        asset = Math.max(0, asset * (1 + growthRate * 0.3) - retirementExpense);
-      }
+    /* Tablet (≥ 640px): 2 columns */
+    @media (min-width:640px) {
+      .grid-2  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+      .grid-3  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+      .grid-6  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+      .grid-kpi{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
     }
-    return data;
-  }, [age, savings, annualSave, retirementAge, expense]);
 
-  const projectedRetirementAsset = assetData.find(
-    (d) => d.age === retirementAge
-  )?.資產 ?? 0;
+    /* Desktop (≥ 960px): full columns */
+    @media (min-width:960px) {
+      .grid-2  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+      .grid-3  { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+      .grid-4  { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+      .grid-6  { grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+      .grid-kpi{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    }
 
-  // Emergency fund
-  const emergencyTarget = expense * 6;
-  const emergencyRatio = Math.min(
-    savings > 0 ? (savings / emergencyTarget) * 100 : 0,
-    100
-  );
-  const pieData = [
-    { name: "已備足", value: Math.min(savings, emergencyTarget) },
-    { name: "缺口", value: Math.max(0, emergencyTarget - savings) },
-  ];
-  const PIE_COLORS = ["#6366f1", "#e2e8f0"];
+    /* ── Client info: 3-col on wide, 2-col tablet, 1-col mobile ── */
+    .grid-client { display:grid; grid-template-columns:1fr; gap:16px 20px; }
+    @media (min-width:480px) {
+      .grid-client { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (min-width:960px) {
+      .grid-client { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px 24px; }
+    }
 
-  // Gaps
-  const lifeNeeded = (expense * 12 * Math.max(num(client.dependents) * 20, 10));
-  const lifeHave = num(protection.lifeInsurance) * 10000;
-  const lifeGap = Math.max(0, lifeNeeded - lifeHave);
-  const medMiscHave = num(protection.medicalCoverage.medicalMisc) * 10000;
-  const medMiscNeeded = 500000;
-  const medGap = Math.max(0, medMiscNeeded - medMiscHave);
+    /* ── Nav: hide premium badge on small screens ── */
+    .nav-premium { display:none; }
+    @media (min-width:560px) { .nav-premium { display:block; } }
 
-  const totalPremium =
-    num(protection.lifeInsurancePremium) +
-    num(protection.accidentPremium) +
-    num(protection.criticalPremium) +
-    num(protection.cancerPremium) +
-    num(protection.ltcPremium) +
-    num(protection.medicalPremium);
+    /* ── Nav title sub-line: hide on tiny screens ── */
+    .nav-sub { display:none; }
+    @media (min-width:400px) { .nav-sub { display:block; } }
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 px-8 py-8 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 80px)",
-            }}
-          />
-        </div>
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-indigo-200 hover:text-white mb-6 transition-colors"
-        >
-          <ArrowLeft size={20} />
-          <span className="font-semibold">返回診斷系統</span>
-        </button>
-        <div className="text-center relative z-10">
-          <div className="text-indigo-300 font-semibold text-lg mb-2 tracking-widest uppercase">
-            Professional Financial Analysis Report
+    /* ── Report header font scale ── */
+    .rpt-title { font-size:20px; }
+    @media (min-width:640px) { .rpt-title { font-size:26px; } }
+    @media (min-width:960px) { .rpt-title { font-size:30px; } }
+
+    /* ── Retirement formula cards: 3 → 1 col ── */
+    .grid-formula { display:grid; grid-template-columns:1fr; gap:12px; }
+    @media (min-width:640px) {
+      .grid-formula { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    }
+
+    /* ── Action cards: always 3 but smaller on mobile ── */
+    .grid-action { display:grid; grid-template-columns:1fr; gap:12px; }
+    @media (min-width:560px) {
+      .grid-action { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    }
+
+    /* ── Gap wall: 2 col on mobile, 4 on desktop ── */
+    .grid-gap { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    @media (min-width:960px) {
+      .grid-gap { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+    }
+
+    /* ── Section padding ── */
+    .sec-pad { padding:20px; }
+    @media (min-width:640px) { .sec-pad { padding:28px; } }
+
+    /* ── Big number scaling ── */
+    .num-xl  { font-size:26px; }
+    .num-xxl { font-size:30px; }
+    @media (min-width:640px) {
+      .num-xl  { font-size:34px; }
+      .num-xxl { font-size:34px; }
+    }
+
+    /* ── Prot card grid ── */
+    .grid-prot { display:grid; grid-template-columns:1fr; gap:16px; }
+    @media (min-width:640px) {
+      .grid-prot { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (min-width:960px) {
+      .grid-prot { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+    }
+
+    /* ── Report chart height ── */
+    .chart-h { height: 220px; }
+    @media (min-width:640px) { .chart-h { height: 280px; } }
+    @media (min-width:960px) { .chart-h { height: 310px; } }
+
+    /* touch targets */
+    button, select, input { touch-action: manipulation; }
+  `;
+  document.head.appendChild(st);
+}
+```
+
+}, []);
+}
+
+// ── Palette ───────────────────────────────────────────────────────────────────
+const C = {
+indigo:”#4f46e5”, violet:”#7c3aed”,
+rose:”#e11d48”,   emerald:”#059669”,
+amber:”#d97706”,  white:”#ffffff”,
+s50:”#f8fafc”, s200:”#e2e8f0”,
+s400:”#94a3b8”, s500:”#64748b”, s600:”#475569”,
+s700:”#334155”, s800:”#1e293b”, s900:”#0f172a”,
+};
+
+// ── Shared inline styles ──────────────────────────────────────────────────────
+const cardSt: CSSProperties = {
+background:C.white, borderRadius:20,
+boxShadow:“0 2px 20px rgba(0,0,0,0.08)”,
+border:`1px solid ${C.s200}`, overflow:“hidden”,
+};
+const lblSt: CSSProperties = {
+display:“block”, color:C.s900, fontWeight:900, fontSize:17, marginBottom:8,
+};
+const bigBase: CSSProperties = {
+display:“block”, width:“100%”, minWidth:0, height:54,
+borderRadius:14, border:`2px solid ${C.s200}`, background:C.s50,
+fontSize:24, fontWeight:800, color:C.s900,
+paddingTop:0, paddingBottom:0, paddingLeft:16, paddingRight:16,
+transition:“border-color .2s, box-shadow .2s”,
+};
+const txtBase: CSSProperties = {
+display:“block”, width:“100%”, minWidth:0, height:54,
+borderRadius:14, border:`2px solid ${C.s200}`, background:C.s50,
+fontSize:16, fontWeight:600, color:C.s900,
+paddingTop:0, paddingBottom:0, paddingLeft:16, paddingRight:16,
+transition:“border-color .2s, box-shadow .2s”,
+};
+const gCell: CSSProperties = { minWidth:0, width:“100%”, overflow:“hidden” };
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface Client {
+name:string; birthdate:string; gender:string;
+occupation:string; phone:string;
+monthlyIncome:string; monthlyExpense:string;
+savings:string; retirementAge:string; dependents:string;
+}
+interface Med {
+hospitalDaily:string; hospitalReal:string;
+surgeryLump:string; surgeryReal:string; medicalMisc:string;
+}
+interface Prot {
+lifeInsurance:string; lifeInsurancePremium:string;
+accidentDeath:string; accidentReal:string;
+accidentHospitalDaily:string; accidentPremium:string;
+criticalIllness:string; criticalPremium:string;
+cancerLumpsum:string; cancerChemoDaily:string; cancerPremium:string;
+ltcLumpsum:string; ltcMonthly:string; ltcPremium:string;
+med:Med; medicalPremium:string;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const calcAge = (bd:string):number => {
+if (!bd) return 0;
+const t=new Date(), b=new Date(bd);
+let a=t.getFullYear()-b.getFullYear();
+if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate())) a–;
+return Math.max(a,0);
+};
+const nv  = (s:string) => parseFloat(s)||0;
+const W   = (v:number) => v>=100000000?`${(v/100000000).toFixed(1)}億`:v>=10000?`${(v/10000).toFixed(0)}萬`:v.toLocaleString(“zh-TW”);
+const $   = (v:number) => `$${Math.round(v).toLocaleString("zh-TW")}`;
+const $W  = (v:number) => `$${W(Math.round(v))}`;
+
+const iC:Client={name:””,birthdate:””,gender:””,occupation:””,phone:””,monthlyIncome:””,monthlyExpense:””,savings:””,retirementAge:“65”,dependents:“0”};
+const iP:Prot={lifeInsurance:””,lifeInsurancePremium:””,accidentDeath:””,accidentReal:””,accidentHospitalDaily:””,accidentPremium:””,criticalIllness:””,criticalPremium:””,cancerLumpsum:””,cancerChemoDaily:””,cancerPremium:””,ltcLumpsum:””,ltcMonthly:””,ltcPremium:””,med:{hospitalDaily:””,hospitalReal:””,surgeryLump:””,surgeryReal:””,medicalMisc:””},medicalPremium:””};
+
+// ── Input atoms ───────────────────────────────────────────────────────────────
+function FI({value,onChange,placeholder=“0”,pre,suf,hl=false}:{value:string;onChange:(v:string)=>void;placeholder?:string;pre?:string;suf?:string;hl?:boolean}){
+const [f,sf]=useState(false);
+return(
+<div style={{position:“relative”,display:“flex”,alignItems:“center”,minWidth:0}}>
+{pre&&<span style={{position:“absolute”,left:14,color:C.s400,fontWeight:700,fontSize:18,pointerEvents:“none”,zIndex:1}}>{pre}</span>}
+<input type=“number” value={value} placeholder={placeholder}
+onChange={e=>onChange(e.target.value)} onFocus={()=>sf(true)} onBlur={()=>sf(false)}
+style={{…bigBase,paddingLeft:pre?34:16,paddingRight:suf?54:16,
+borderColor:hl?C.rose:f?C.indigo:C.s200,
+boxShadow:hl?“0 0 0 3px rgba(225,29,72,0.18)”:f?“0 0 0 4px rgba(79,70,229,0.18)”:“none”}}/>
+{suf&&<span style={{position:“absolute”,right:10,color:C.s400,fontWeight:600,fontSize:12,pointerEvents:“none”,whiteSpace:“nowrap”}}>{suf}</span>}
+</div>
+);
+}
+function TI({value,onChange,placeholder=””,type=“text”}:{value:string;onChange:(v:string)=>void;placeholder?:string;type?:string}){
+const [f,sf]=useState(false);
+return <input type={type} value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)} onFocus={()=>sf(true)} onBlur={()=>sf(false)} style={{…txtBase,borderColor:f?C.indigo:C.s200,boxShadow:f?“0 0 0 4px rgba(79,70,229,0.18)”:“none”}}/>;
+}
+function SI({value,onChange,opts}:{value:string;onChange:(v:string)=>void;opts:{value:string;label:string}[]}){
+const [f,sf]=useState(false);
+return(
+<div style={{position:“relative”,minWidth:0,width:“100%”}}>
+<select value={value} onChange={e=>onChange(e.target.value)} onFocus={()=>sf(true)} onBlur={()=>sf(false)}
+style={{…txtBase,paddingRight:38,cursor:“pointer”,borderColor:f?C.indigo:C.s200,boxShadow:f?“0 0 0 4px rgba(79,70,229,0.18)”:“none”}}>
+{opts.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+</select>
+<span style={{position:“absolute”,right:12,top:“50%”,transform:“translateY(-50%)”,pointerEvents:“none”,color:C.s400,fontSize:16}}>▾</span>
+</div>
+);
+}
+function Fld({label,children}:{label:React.ReactNode;children:React.ReactNode}){
+return <div style={{minWidth:0,width:“100%”}}><label style={lblSt}>{label}</label>{children}</div>;
+}
+
+// ── ProtCard ──────────────────────────────────────────────────────────────────
+function PC({gradient,icon,title,sub,children}:{gradient:string;icon:string;title:string;sub:string;children:React.ReactNode}){
+return(
+<div style={{…cardSt,transition:“box-shadow .25s”}}>
+<div style={{background:gradient,padding:“16px 20px”,display:“flex”,alignItems:“center”,gap:12}}>
+<div style={{background:“rgba(255,255,255,0.2)”,borderRadius:12,width:44,height:44,flexShrink:0,display:“flex”,alignItems:“center”,justifyContent:“center”,fontSize:20}}>{icon}</div>
+<div>
+<div style={{color:C.white,fontWeight:900,fontSize:18}}>{title}</div>
+<div style={{color:“rgba(255,255,255,0.75)”,fontSize:12,fontWeight:500,marginTop:2}}>{sub}</div>
+</div>
+</div>
+<div style={{padding:18,display:“flex”,flexDirection:“column”,gap:16}}>{children}</div>
+</div>
+);
+}
+
+// ── Dark section box ──────────────────────────────────────────────────────────
+function DarkBox({children,style}:{children:React.ReactNode;style?:CSSProperties}){
+return(
+<div style={{background:C.s800,borderRadius:20,border:`1px solid ${C.s700}`,…style}}>
+{children}
+</div>
+);
+}
+
+// ── Section header inside dark box ───────────────────────────────────────────
+function RptHeader({icon,title,sub}:{icon:string;title:string;sub:string}){
+return(
+<div style={{display:“flex”,alignItems:“center”,gap:12,marginBottom:20}}>
+<div style={{background:“rgba(225,29,72,0.2)”,borderRadius:12,width:42,height:42,flexShrink:0,display:“flex”,alignItems:“center”,justifyContent:“center”,fontSize:20}}>{icon}</div>
+<div>
+<div style={{color:C.white,fontWeight:900,fontSize:20}}>{title}</div>
+<div style={{color:C.s400,fontSize:12,marginTop:2}}>{sub}</div>
+</div>
+</div>
+);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORT
+// ══════════════════════════════════════════════════════════════════════════════
+function Report({client,prot,onBack}:{client:Client;prot:Prot;onBack:()=>void}){
+const age     = calcAge(client.birthdate);
+const income  = nv(client.monthlyIncome);
+const expense = nv(client.monthlyExpense);
+const savings = nv(client.savings);
+const retAge  = nv(client.retirementAge)||65;
+const yToRet  = Math.max(retAge-age, 0);
+const INFL=0.025, GROW=0.05;
+// 動態退休年數：平均餘命 85 歲 - 預計退休年齡（隨 retirementAge 即時聯動）
+const RET_YEARS = Math.max(85 - retAge, 0);
+
+// Retirement calcs
+const retMonthExp = expense * Math.pow(1+INFL, yToRet);
+// 退休準備金 = 退休時等值月支出 × 12個月 × (85 - 退休年齡)
+const totalTarget = retMonthExp * 12 * RET_YEARS;
+const savingsFV   = savings * Math.pow(1+GROW, yToRet);
+const retGap      = Math.max(0, totalTarget - savingsFV);
+const annualNeed  = yToRet>0 ? totalTarget/yToRet : totalTarget;
+const monthlyNeed = annualNeed/12;
+const totalPremium= nv(prot.lifeInsurancePremium)+nv(prot.accidentPremium)+nv(prot.criticalPremium)+nv(prot.cancerPremium)+nv(prot.ltcPremium)+nv(prot.medicalPremium);
+const realMonthlySave = income-expense-totalPremium/12;
+
+// Cashflow
+const cashflow = useMemo(()=>{
+let asset=savings;
+const rows:{ age:number; 資產規模:number; 年度支出:number }[]=[];
+for(let yr=age; yr<=90; yr++){
+const inflExp=expense*Math.pow(1+INFL,yr-age)*12;
+rows.push({age:yr,資產規模:Math.round(Math.max(asset,0)),年度支出:Math.round(inflExp)});
+asset = yr<retAge ? asset*(1+GROW)+Math.max(realMonthlySave,0)*12 : asset*(1+GROW*0.4)-inflExp;
+}
+return rows;
+},[age,savings,realMonthlySave,retAge,expense]);
+
+const depleteIdx=cashflow.findIndex((d,i)=>i>0&&cashflow[i-1].資產規模>0&&d.資產規模===0);
+const depleteAge=depleteIdx>0?cashflow[depleteIdx].age:null;
+const depleteY  =depleteIdx>0?cashflow[depleteIdx-1].資產規模:0;
+
+// Gaps
+const medDailyHave=nv(prot.med.hospitalDaily)+nv(prot.med.hospitalReal);
+const medMiscHave =nv(prot.med.medicalMisc)*10000;
+const accRealHave =nv(prot.accidentReal)*10000;
+const ciHave      =nv(prot.criticalIllness)*10000;
+const gaps=[
+{icon:“🏥”,label:“醫療住院日額”,std:5000, stdL:“5,000 元/日”,have:medDailyHave,gap:Math.max(0,5000-medDailyHave),   haveStr:`${medDailyHave.toLocaleString("zh-TW")} 元/日`,gapStr:`-${Math.max(0,5000-medDailyHave).toLocaleString("zh-TW")} 元/日`,note:“定額＋實支合計”},
+{icon:“💊”,label:“醫療雜費”,    std:300000,stdL:“30 萬”,     have:medMiscHave, gap:Math.max(0,300000-medMiscHave),  haveStr:`${W(medMiscHave)} 元`,gapStr:`-${W(Math.max(0,300000-medMiscHave))} 元`,note:“新式療法自費上限”},
+{icon:“🚑”,label:“意外實支”,    std:100000,stdL:“10 萬”,     have:accRealHave, gap:Math.max(0,100000-accRealHave),  haveStr:`${W(accRealHave)} 元`,gapStr:`-${W(Math.max(0,100000-accRealHave))} 元`,note:“意外傷害醫療費用”},
+{icon:“⚡”,label:“重大傷病”,    std:2000000,stdL:“200 萬”,   have:ciHave,      gap:Math.max(0,2000000-ciHave),      haveStr:`${W(ciHave)} 元`,gapStr:`-${W(Math.max(0,2000000-ciHave))} 元`,note:“22 類重症確診理賠”},
+];
+
+// Protection groups (no premium rows)
+const groups=[
+{title:“壽險保障”,color:”#6366f1”,bg:“rgba(99,102,241,0.12)”,icon:“🛡️”,items:[
+{k:“壽險身故保額”,v:nv(prot.lifeInsurance)>0?`${W(nv(prot.lifeInsurance)*10000)} 元`:”—”},
+]},
+{title:“意外保障”,color:”#8b5cf6”,bg:“rgba(139,92,246,0.12)”,icon:“⚡”,items:[
+{k:“意外身故保額”,v:nv(prot.accidentDeath)>0?`${W(nv(prot.accidentDeath)*10000)} 元`:”—”},
+{k:“意外實支”,    v:nv(prot.accidentReal)>0?`${W(nv(prot.accidentReal)*10000)} 元`:”—”},
+{k:“意外住院日額”,v:nv(prot.accidentHospitalDaily)>0?`${nv(prot.accidentHospitalDaily).toLocaleString("zh-TW")} 元/日`:”—”},
+]},
+{title:“醫療保障”,color:”#2563eb”,bg:“rgba(37,99,235,0.12)”,icon:“🏥”,items:[
+{k:“住院定額”,v:nv(prot.med.hospitalDaily)>0?`${nv(prot.med.hospitalDaily).toLocaleString("zh-TW")} 元/日`:”—”},
+{k:“住院實支”,v:nv(prot.med.hospitalReal)>0?`${nv(prot.med.hospitalReal).toLocaleString("zh-TW")} 元/日`:”—”},
+{k:“手術定額”,v:nv(prot.med.surgeryLump)>0?`${W(nv(prot.med.surgeryLump)*10000)} 元`:”—”},
+{k:“手術實支”,v:nv(prot.med.surgeryReal)>0?`${W(nv(prot.med.surgeryReal)*10000)} 元`:”—”},
+{k:“醫療雜費”,v:nv(prot.med.medicalMisc)>0?`${W(nv(prot.med.medicalMisc)*10000)} 元`:”—”},
+]},
+{title:“重大疾病”,color:”#e11d48”,bg:“rgba(225,29,72,0.12)”,icon:“⚠️”,items:[
+{k:“重大傷病”,  v:nv(prot.criticalIllness)>0?`${W(nv(prot.criticalIllness)*10000)} 元`:”—”},
+{k:“癌症一次金”,v:nv(prot.cancerLumpsum)>0?`${W(nv(prot.cancerLumpsum)*10000)} 元`:”—”},
+{k:“化/放療補助”,v:nv(prot.cancerChemoDaily)>0?`${nv(prot.cancerChemoDaily).toLocaleString("zh-TW")} 元/日`:”—”},
+]},
+{title:“長照保障”,color:”#059669”,bg:“rgba(5,150,105,0.12)”,icon:“🏆”,items:[
+{k:“長照一次金”,v:nv(prot.ltcLumpsum)>0?`${W(nv(prot.ltcLumpsum)*10000)} 元`:”—”},
+{k:“月扶助金”,  v:nv(prot.ltcMonthly)>0?`${nv(prot.ltcMonthly).toLocaleString("zh-TW")} 元/月`:”—”},
+]},
+{title:“養老保障”,color:”#d97706”,bg:“rgba(217,119,6,0.12)”,icon:“💰”,items:[
+{k:“年度總保費”,  v:totalPremium>0?$(totalPremium):”—”},
+{k:“月均保費”,    v:totalPremium>0?$(totalPremium/12):”—”},
+{k:“保費占月收入”,v:income>0&&totalPremium>0?`${((totalPremium/12/income)*100).toFixed(1)}%`:”—”},
+]},
+];
+
+const Tip=({active,payload,label}:{active?:boolean;payload?:{name:string;value:number;color:string}[];label?:number})=>{
+if(!active||!payload?.length) return null;
+return(
+<div style={{background:C.s900,border:`1px solid ${C.s700}`,borderRadius:10,padding:“10px 14px”,minWidth:160}}>
+<div style={{color:C.s400,fontSize:12,fontWeight:600,marginBottom:6}}>{label} 歲</div>
+{payload.map((p,i)=>(
+<div key={i} style={{display:“flex”,justifyContent:“space-between”,gap:12,marginBottom:3}}>
+<span style={{color:p.color,fontSize:12,fontWeight:600}}>{p.name}</span>
+<span style={{color:”#e2e8f0”,fontSize:12,fontWeight:700}}>{$W(p.value)}</span>
+</div>
+))}
+</div>
+);
+};
+
+return(
+<div style={{minHeight:“100vh”,background:C.s900}}>
+
+```
+  {/* Header */}
+  <div style={{background:"linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95)",padding:"20px 20px 18px",position:"relative",overflow:"hidden"}}>
+    <div style={{position:"absolute",inset:0,opacity:.05,backgroundImage:"repeating-linear-gradient(45deg,transparent,transparent 40px,#fff 40px,#fff 41px)"}}/>
+    <button onClick={onBack} style={{display:"flex",alignItems:"center",gap:6,color:"#c7d2fe",background:"none",border:"none",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:14}}>
+      ← 返回
+    </button>
+    <div style={{textAlign:"center",position:"relative",zIndex:1}}>
+      <div style={{color:"#a5b4fc",fontSize:11,fontWeight:600,letterSpacing:2,marginBottom:6}}>FINANCIAL ANALYSIS REPORT</div>
+      <h1 className="rpt-title" style={{color:C.white,fontWeight:900,lineHeight:1.4}}>
+        「{client.name||"客戶"}」{client.gender==="male"?"先生":"小姐"}<br/>
+        專屬財務保障分析報告
+      </h1>
+      <p style={{color:"#a5b4fc",marginTop:8,fontSize:12}}>
+        {new Date().toLocaleDateString("zh-TW")} ｜ {age} 歲 ｜ 退休 {retAge} 歲
+      </p>
+    </div>
+  </div>
+
+  <div style={{maxWidth:1100,margin:"0 auto",padding:"18px 16px",display:"flex",flexDirection:"column",gap:18}}>
+
+    {/* ── BLOCK 1：退休財務缺口 ─────────────────────────────────────── */}
+    <DarkBox style={{padding:0}}>
+      <div className="sec-pad">
+        <RptHeader icon="🔥" title="退休財務缺口診斷" sub={`通膨複利 2.5% · 退休後 ${RET_YEARS} 年需求試算（平均餘命 85 歲）`}/>
+
+        {/* 3 formula cards */}
+        <div className="grid-formula" style={{marginBottom:16}}>
+          {/* Step 1 */}
+          <div style={{background:"rgba(99,102,241,0.15)",border:"1px solid rgba(99,102,241,0.35)",borderRadius:14,padding:16}}>
+            <div style={{color:"#a5b4fc",fontSize:11,fontWeight:700,marginBottom:6,letterSpacing:1}}>STEP 1｜現在月支出</div>
+            <div className="num-xl" style={{color:C.white,fontWeight:900}}>{$(expense)}</div>
+            <div style={{color:C.s500,fontSize:11,marginTop:6}}>目前每月固定支出基準</div>
           </div>
-          <h1 className="text-4xl font-black text-white">
-            「{client.name || "客戶"}」
-            {client.gender === "male" ? "先生" : "小姐"} 專屬財務保障分析報告
-          </h1>
-          <div className="text-indigo-200 mt-2 font-medium">
-            報告日期：{new Date().toLocaleDateString("zh-TW")} ｜ 年齡：{age}{" "}
-            歲 ｜ 退休規劃：{retirementAge} 歲
+          {/* Step 2 */}
+          <div style={{background:"rgba(225,29,72,0.15)",border:"2px solid rgba(225,29,72,0.45)",borderRadius:14,padding:16}}>
+            <div style={{color:"#fca5a5",fontSize:11,fontWeight:700,marginBottom:6,letterSpacing:1}}>STEP 2｜退休時等值月支出</div>
+            <div className="num-xl" style={{color:"#fb7185",fontWeight:900}}>{$(retMonthExp)}</div>
+            <div style={{background:"rgba(0,0,0,0.22)",borderRadius:8,padding:"6px 10px",marginTop:8}}>
+              <div style={{color:"#fca5a5",fontSize:11}}>{$(expense)} × (1+2.5%)^{yToRet}年</div>
+            </div>
+            <div style={{color:"#fca5a5",fontSize:11,marginTop:6}}>
+              購買力縮水 {((retMonthExp/Math.max(expense,1)-1)*100).toFixed(0)}%
+            </div>
+          </div>
+          {/* Step 3 */}
+          <div style={{background:"rgba(217,119,6,0.15)",border:"2px solid rgba(217,119,6,0.4)",borderRadius:14,padding:16}}>
+            <div style={{color:"#fcd34d",fontSize:11,fontWeight:700,marginBottom:6,letterSpacing:1}}>STEP 3｜所需退休總資產</div>
+            <div className="num-xl" style={{color:"#fbbf24",fontWeight:900}}>{$W(totalTarget)}</div>
+            <div style={{background:"rgba(0,0,0,0.22)",borderRadius:8,padding:"6px 10px",marginTop:8}}>
+              <div style={{color:"#fcd34d",fontSize:11}}>{$(retMonthExp)} × 12月 × {RET_YEARS}年（85 - {retAge}歲）</div>
+            </div>
+            <div style={{color:"#fcd34d",fontSize:11,marginTop:6}}>退休後 {RET_YEARS} 年生活費（85 - {retAge} 歲）</div>
+          </div>
+        </div>
+
+        {/* Action plan */}
+        <div style={{background:"rgba(0,0,0,0.3)",border:`1px solid ${C.s700}`,borderRadius:14,padding:16}}>
+          <div style={{color:"#e2e8f0",fontWeight:900,fontSize:15,marginBottom:14,textAlign:"center"}}>
+            💡 為了達成目標，您現在需要做的是...
+          </div>
+          <div className="grid-action">
+            {/* 現有儲蓄終值 */}
+            <div style={{background:"rgba(52,211,153,0.1)",border:"1px solid rgba(52,211,153,0.3)",borderRadius:12,padding:14}}>
+              <div style={{color:"#6ee7b7",fontSize:11,fontWeight:700,marginBottom:6}}>現有儲蓄退休終值</div>
+              <div className="num-xl" style={{color:"#34d399",fontWeight:900}}>{$W(savingsFV)}</div>
+              <div style={{background:"rgba(0,0,0,0.18)",borderRadius:7,padding:"5px 8px",marginTop:7}}>
+                <div style={{color:"#6ee7b7",fontSize:11}}>{$(savings)} × (1+5%)^{yToRet}年</div>
+              </div>
+            </div>
+            {/* 每年需儲蓄 */}
+            <div style={{background:retGap>0?"rgba(225,29,72,0.12)":"rgba(52,211,153,0.1)",border:`2px solid ${retGap>0?"rgba(225,29,72,0.38)":"rgba(52,211,153,0.3)"}`,borderRadius:12,padding:14}}>
+              <div style={{color:retGap>0?"#fca5a5":"#6ee7b7",fontSize:11,fontWeight:700,marginBottom:6}}>每年需儲蓄金額</div>
+              <div className="num-xl" style={{color:retGap>0?"#fb7185":"#34d399",fontWeight:900}}>
+                {retGap>0?$W(annualNeed):"✅ 已足備"}
+              </div>
+              {retGap>0&&(
+                <div style={{background:"rgba(0,0,0,0.18)",borderRadius:7,padding:"5px 8px",marginTop:7}}>
+                  <div style={{color:"#fca5a5",fontSize:11}}>{$W(totalTarget)} ÷ {yToRet}年</div>
+                </div>
+              )}
+            </div>
+            {/* 每月需儲蓄 */}
+            <div style={{background:retGap>0?"rgba(225,29,72,0.12)":"rgba(52,211,153,0.1)",border:`2px solid ${retGap>0?"rgba(225,29,72,0.38)":"rgba(52,211,153,0.3)"}`,borderRadius:12,padding:14}}>
+              <div style={{color:retGap>0?"#fca5a5":"#6ee7b7",fontSize:11,fontWeight:700,marginBottom:6}}>每月需儲蓄金額</div>
+              <div className="num-xxl" style={{color:retGap>0?"#fb7185":"#34d399",fontWeight:900}}>
+                {retGap>0?$(monthlyNeed):"✅ 已足備"}
+              </div>
+              {retGap>0&&(
+                <div style={{background:"rgba(0,0,0,0.18)",borderRadius:7,padding:"5px 8px",marginTop:7}}>
+                  <div style={{color:"#fca5a5",fontSize:11}}>{$W(annualNeed)} ÷ 12個月</div>
+                </div>
+              )}
+              <div style={{color:C.s500,fontSize:11,marginTop:6}}>
+                {retGap>0?`現月儲 ${$(realMonthlySave)}，缺 ${$(Math.max(0,monthlyNeed-realMonthlySave))}/月`:"繼續保持！"}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+    </DarkBox>
 
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-        {/* KPI Row */}
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            {
-              label: "月儲蓄",
-              value: `$${monthlySave.toLocaleString("zh-TW")}`,
-              sub: "每月淨餘",
-              color: "from-indigo-600 to-indigo-800",
-              icon: <DollarSign size={24} />,
-            },
-            {
-              label: "儲蓄率",
-              value: `${savingsRate.toFixed(1)}%`,
-              sub: "收入佔比",
-              color: "from-violet-600 to-violet-800",
-              icon: <TrendingUp size={24} />,
-            },
-            {
-              label: "退休年資",
-              value: `${yearsToRetire} 年`,
-              sub: "距退休",
-              color: "from-blue-600 to-blue-800",
-              icon: <Calendar size={24} />,
-            },
-            {
-              label: "年度保費",
-              value: `$${totalPremium.toLocaleString("zh-TW")}`,
-              sub: "全保障成本",
-              color: "from-emerald-600 to-emerald-800",
-              icon: <Shield size={24} />,
-            },
-          ].map((kpi) => (
-            <div
-              key={kpi.label}
-              className={`bg-gradient-to-br ${kpi.color} rounded-2xl p-5 shadow-xl`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-white/70 font-semibold text-sm">
-                  {kpi.label}
-                </span>
-                <div className="text-white/50">{kpi.icon}</div>
-              </div>
-              <div className="text-3xl font-black text-white">{kpi.value}</div>
-              <div className="text-white/60 text-sm mt-1">{kpi.sub}</div>
+    {/* ── BLOCK 2：現金流壓力曲線 ──────────────────────────────────── */}
+    <DarkBox style={{padding:0}}>
+      <div className="sec-pad">
+        <div style={{marginBottom:14}}>
+          <div style={{color:C.white,fontWeight:900,fontSize:19}}>📉 未來現金流壓力曲線</div>
+          <div style={{color:C.s400,fontSize:12,marginTop:3}}>
+            月儲蓄 {$(Math.max(realMonthlySave,0))} × 5% 複利，退休後依通膨支出消耗
+          </div>
+        </div>
+
+        {depleteAge&&(
+          <div style={{background:"rgba(225,29,72,0.14)",border:"1px solid rgba(225,29,72,0.4)",borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"flex-start",gap:10}}>
+            <span style={{fontSize:18,flexShrink:0}}>🚨</span>
+            <div style={{color:"#fca5a5",fontWeight:700,fontSize:13}}>
+              資產預計於 <span style={{color:"#fb7185",fontSize:17,fontWeight:900}}>{depleteAge} 歲</span> 枯竭 — 距壽命 90 歲還有 {90-depleteAge} 年缺口！
+            </div>
+          </div>
+        )}
+
+        {/* Legend */}
+        <div style={{display:"flex",gap:16,marginBottom:10,flexWrap:"wrap"}}>
+          {[{c:"#6366f1",l:"資產規模"},{c:"#fb7185",l:"年度支出",dash:true}].map(x=>(
+            <div key={x.l} style={{display:"flex",alignItems:"center",gap:6}}>
+              <div style={{width:20,height:3,background:x.dash?`repeating-linear-gradient(90deg,${x.c} 0,${x.c} 4px,transparent 4px,transparent 8px)`:x.c,borderRadius:2}}/>
+              <span style={{color:C.s400,fontSize:12}}>{x.l}</span>
             </div>
           ))}
         </div>
 
-        {/* Asset Growth Chart */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-indigo-500/20 rounded-xl p-2">
-              <TrendingUp className="text-indigo-400" size={24} />
-            </div>
-            <div>
-              <h2 className="text-white font-black text-2xl">資產增長模型</h2>
-              <p className="text-slate-400 text-sm">
-                複利成長預測（假設年報酬率 5%）
-              </p>
-            </div>
-            <div className="ml-auto bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-2">
-              <span className="text-indigo-300 font-bold text-lg">
-                退休資產預估：{fmt(projectedRetirementAsset)} 元
-              </span>
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={320}>
-            <AreaChart data={assetData}>
+        <div className="chart-h">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={cashflow} margin={{top:8,right:4,left:4,bottom:4}}>
               <defs>
-                <linearGradient id="assetGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.5} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#6366f1" stopOpacity={0.55}/>
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02}/>
                 </linearGradient>
-                <linearGradient id="targetGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#fb7185" stopOpacity={0.3}/>
+                  <stop offset="100%" stopColor="#fb7185" stopOpacity={0.02}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis
-                dataKey="age"
-                stroke="#475569"
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                label={{
-                  value: "年齡",
-                  position: "insideBottomRight",
-                  fill: "#64748b",
-                  offset: -5,
-                }}
-              />
-              <YAxis
-                stroke="#475569"
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                tickFormatter={(v) => fmt(v)}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "#0f172a",
-                  border: "1px solid #334155",
-                  borderRadius: "12px",
-                  color: "#e2e8f0",
-                }}
-                formatter={(v: number) => [`${v.toLocaleString("zh-TW")} 元`, ""]}
-                labelFormatter={(l) => `${l} 歲`}
-              />
-              <Area
-                type="monotone"
-                dataKey="資產"
-                stroke="#6366f1"
-                strokeWidth={3}
-                fill="url(#assetGrad)"
-              />
-              <Area
-                type="monotone"
-                dataKey="目標線"
-                stroke="#8b5cf6"
-                strokeWidth={2}
-                strokeDasharray="6 4"
-                fill="url(#targetGrad)"
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={C.s700}/>
+              <XAxis dataKey="age" stroke={C.s600} tick={{fill:C.s400,fontSize:11}}/>
+              <YAxis stroke={C.s600} tick={{fill:C.s400,fontSize:10}} tickFormatter={$W} width={60}/>
+              <Tooltip content={<Tip/>}/>
+              <ReferenceLine x={retAge} stroke="#fbbf24" strokeDasharray="4 3"
+                label={{value:`退休`,position:"insideTopRight",fill:"#fbbf24",fontSize:11}}/>
+              {depleteAge&&depleteY>0&&(
+                <ReferenceDot x={depleteAge-1} y={depleteY} r={8} fill="#e11d48" stroke="#fff" strokeWidth={2}
+                  label={{value:`${depleteAge}歲`,position:"top",fill:"#fb7185",fontSize:11,fontWeight:700}}/>
+              )}
+              <Area type="monotone" dataKey="資產規模" stroke="#6366f1" strokeWidth={3} fill="url(#ag)"/>
+              <Area type="monotone" dataKey="年度支出" stroke="#fb7185" strokeWidth={2} strokeDasharray="4 3" fill="url(#eg)"/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
+      </div>
+    </DarkBox>
 
-        {/* Diagnostic Cards Row */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Financial Efficiency */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-5">
-              <BarChart2 className="text-indigo-400" size={22} />
-              <h3 className="text-white font-black text-xl">財務效率</h3>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-1.5">
-                  <span className="text-slate-400 text-sm font-semibold">
-                    儲蓄率
-                  </span>
-                  <span className="text-indigo-400 font-black">
-                    {savingsRate.toFixed(1)}%
-                  </span>
+    {/* ── BLOCK 3：四大金律缺口牆 ──────────────────────────────────── */}
+    <DarkBox style={{padding:0}}>
+      <div className="sec-pad">
+        <RptHeader icon="⚔️" title="風險防禦缺口牆" sub="四大保障金律嚴格診斷"/>
+        <div className="grid-gap">
+          {gaps.map(item=>{
+            const pct=Math.min((item.have/item.std)*100,100);
+            const ok=item.gap===0;
+            return(
+              <div key={item.label} style={{borderRadius:14,padding:16,
+                border:ok?"1px solid rgba(52,211,153,0.3)":"2px solid rgba(251,113,133,0.5)",
+                background:ok?"rgba(52,211,153,0.07)":"rgba(225,29,72,0.1)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <span style={{fontSize:20}}>{item.icon}</span>
+                  <span style={{color:C.white,fontWeight:900,fontSize:14}}>{item.label}</span>
                 </div>
-                <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all"
-                    style={{ width: `${Math.min(savingsRate, 100)}%` }}
-                  />
+                <div style={{color:C.s500,fontSize:11,marginBottom:3}}>
+                  標竿：<span style={{color:"#fbbf24",fontWeight:800}}>{item.stdL}</span>
                 </div>
-                <div className="text-slate-500 text-xs mt-1">
-                  建議儲蓄率 20% 以上
+                <div style={{color:C.s500,fontSize:11,marginBottom:10}}>
+                  現有：<span style={{color:ok?"#34d399":"#cbd5e1",fontWeight:700}}>{item.have>0?item.haveStr:"未投保"}</span>
                 </div>
+                <div style={{height:7,background:"rgba(255,255,255,0.08)",borderRadius:999,overflow:"hidden",marginBottom:10}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:ok?"linear-gradient(90deg,#10b981,#34d399)":"linear-gradient(90deg,#e11d48,#fb7185)",borderRadius:999}}/>
+                </div>
+                <div style={{fontWeight:900,fontSize:ok?17:22,color:ok?"#34d399":"#fb7185",lineHeight:1.1}}>
+                  {ok?"✅ 已足備":item.gapStr}
+                </div>
+                {!ok&&<div style={{color:"#fca5a5",fontSize:11,marginTop:3}}>尚缺 {((item.gap/item.std)*100).toFixed(0)}%</div>}
+                <div style={{color:C.s600,fontSize:10,marginTop:6}}>{item.note}</div>
               </div>
-              <div>
-                <div className="flex justify-between mb-1.5">
-                  <span className="text-slate-400 text-sm font-semibold">
-                    資產成長速度
-                  </span>
-                  <span className="text-emerald-400 font-black">5.0% /年</span>
-                </div>
-                <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                    style={{ width: "62%" }}
-                  />
-                </div>
-              </div>
-              <div className="bg-slate-800/50 rounded-xl p-3 mt-2">
-                <div className="text-slate-400 text-xs font-semibold mb-1">
-                  年度儲蓄金額
-                </div>
-                <div className="text-white font-black text-2xl">
-                  ${annualSave.toLocaleString("zh-TW")}
-                </div>
-              </div>
+            );
+          })}
+        </div>
+      </div>
+    </DarkBox>
+
+    {/* ── BLOCK 4：六大保障分區 ────────────────────────────────────── */}
+    <DarkBox style={{padding:0}}>
+      <div className="sec-pad">
+        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{background:"rgba(99,102,241,0.2)",borderRadius:12,width:42,height:42,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>📋</div>
+            <div>
+              <div style={{color:C.white,fontWeight:900,fontSize:19}}>保障項目彙整總覽</div>
+              <div style={{color:C.s400,fontSize:12,marginTop:2}}>六大保障分區</div>
             </div>
           </div>
-
-          {/* Risk Defense */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-5">
-              <Shield className="text-rose-400" size={22} />
-              <h3 className="text-white font-black text-xl">風險防禦</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="bg-slate-800/50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="text-amber-400" size={16} />
-                  <span className="text-slate-300 text-sm font-bold">
-                    醫療雜費缺口
-                  </span>
-                </div>
-                <div
-                  className={`text-2xl font-black ${medGap > 0 ? "text-rose-400" : "text-emerald-400"}`}
-                >
-                  {medGap > 0 ? `-${fmt(medGap)}` : "✓ 已足備"}
-                </div>
-                <div className="text-slate-500 text-xs mt-1">
-                  建議備足 50 萬
-                </div>
-              </div>
-              <div className="bg-slate-800/50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="text-amber-400" size={16} />
-                  <span className="text-slate-300 text-sm font-bold">
-                    身故責任缺口
-                  </span>
-                </div>
-                <div
-                  className={`text-2xl font-black ${lifeGap > 0 ? "text-rose-400" : "text-emerald-400"}`}
-                >
-                  {lifeGap > 0 ? `-${fmt(lifeGap)}` : "✓ 已足備"}
-                </div>
-                <div className="text-slate-500 text-xs mt-1">
-                  扶養人數 × 20 年需求
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Emergency Fund */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-5">
-              <PieChartIcon className="text-emerald-400" size={22} />
-              <h3 className="text-white font-black text-xl">緊急預備金</h3>
-            </div>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
-                >
-                  {pieData.map((_, idx) => (
-                    <Cell key={idx} fill={PIE_COLORS[idx]} />
-                  ))}
-                </Pie>
-                <Legend
-                  formatter={(v) => (
-                    <span style={{ color: "#94a3b8", fontSize: 12 }}>{v}</span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="text-center -mt-2">
-              <div
-                className={`text-3xl font-black ${emergencyRatio >= 100 ? "text-emerald-400" : "text-amber-400"}`}
-              >
-                {emergencyRatio.toFixed(0)}%
-              </div>
-              <div className="text-slate-500 text-sm">
-                安全水位（建議 6 個月）
-              </div>
-              <div className="text-slate-400 text-xs mt-1">
-                目標金額：${emergencyTarget.toLocaleString("zh-TW")}
-              </div>
-            </div>
+          <div style={{background:"rgba(217,119,6,0.2)",border:"1px solid rgba(217,119,6,0.4)",borderRadius:12,padding:"8px 14px"}}>
+            <div style={{color:"#fcd34d",fontSize:11,fontWeight:600}}>年度總保費</div>
+            <div style={{color:"#fbbf24",fontWeight:900,fontSize:20}}>{$(totalPremium)}</div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center text-slate-600 text-sm pb-4">
-          本報告僅供參考，實際保障規劃請洽專業財務顧問。
+        <div className="grid-6">
+          {groups.map(grp=>(
+            <div key={grp.title} style={{background:grp.bg,border:`1px solid ${grp.color}40`,borderRadius:14,overflow:"hidden"}}>
+              <div style={{background:`${grp.color}22`,borderBottom:`1px solid ${grp.color}40`,padding:"10px 16px",display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:16}}>{grp.icon}</span>
+                <span style={{color:grp.color,fontWeight:900,fontSize:15}}>{grp.title}</span>
+              </div>
+              <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:9}}>
+                {grp.items.map(item=>(
+                  <div key={item.k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",minWidth:0}}>
+                    <span style={{color:C.s400,fontSize:12,fontWeight:600,flexShrink:0,marginRight:6}}>{item.k}</span>
+                    <span style={{color:item.v==="—"?C.s600:C.white,fontWeight:item.v==="—"?400:800,fontSize:item.v==="—"?12:14,textAlign:"right"}}>{item.v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </DarkBox>
+
+    {/* Disclaimer */}
+    <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${C.s700}`,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
+      <p style={{color:C.s600,fontSize:11,lineHeight:1.9}}>
+        本報告僅供參考，實際保障內容以各保險契約條款為準。<br/>
+        退休缺口試算採通膨假設 2.5%、資產成長率 5%，不代表實際投資績效保證。
+      </p>
+    </div>
+  </div>
+</div>
+```
+
+);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MAIN APP
+// ══════════════════════════════════════════════════════════════════════════════
+export default function App(){
+useGlobalStyles();
+const [client,setClient]=useState<Client>(iC);
+const [prot,setProt]=useState<Prot>(iP);
+const [showRep,setShowRep]=useState(false);
+
+const sc=(k:keyof Client)=>(v:string)=>setClient(p=>({…p,[k]:v}));
+const sp=(k:keyof Prot)=>(v:string)=>setProt(p=>({…p,[k]:v as never}));
+const sm=(k:keyof Med)=>(v:string)=>setProt(p=>({…p,med:{…p.med,[k]:v}}));
+
+const age=calcAge(client.birthdate);
+const income=nv(client.monthlyIncome), expense=nv(client.monthlyExpense);
+const monthlySave=income-expense;
+const savingsRate=income>0?(monthlySave/income)*100:0;
+const totalPremium=nv(prot.lifeInsurancePremium)+nv(prot.accidentPremium)+nv(prot.criticalPremium)+nv(prot.cancerPremium)+nv(prot.ltcPremium)+nv(prot.medicalPremium);
+
+if(showRep) return <Report client={client} prot={prot} onBack={()=>setShowRep(false)}/>;
+
+const pcards=[
+{gradient:“linear-gradient(135deg,#1d4ed8,#3730a3)”,icon:“🏥”,title:“醫療險”,sub:“住院・手術・雜費”,
+content:(
+<>
+<Fld label="住院定額（元/日）"><FI value={prot.med.hospitalDaily} onChange={sm(“hospitalDaily”)} suf=“元/日”/></Fld>
+<Fld label="住院實支（元/日）"><FI value={prot.med.hospitalReal}  onChange={sm(“hospitalReal”)}  suf=“元/日”/></Fld>
+<Fld label="手術定額（萬）">  <FI value={prot.med.surgeryLump}   onChange={sm(“surgeryLump”)}   suf=“萬”/></Fld>
+<Fld label="手術實支（萬）">  <FI value={prot.med.surgeryReal}   onChange={sm(“surgeryReal”)}   suf=“萬”/></Fld>
+<Fld label={<span style={{display:“flex”,alignItems:“center”,gap:5}}><span style={{color:C.rose}}>●</span>醫療雜費（萬）<span style={{color:C.rose,fontSize:12,fontWeight:700}}>關鍵</span></span>}>
+<FI value={prot.med.medicalMisc} onChange={sm(“medicalMisc”)} suf=“萬” hl/>
+</Fld>
+<Fld label="年度保費（元）"><FI value={prot.medicalPremium} onChange={sp(“medicalPremium”)} pre=”$”/></Fld>
+</>
+)},
+{gradient:“linear-gradient(135deg,#6d28d9,#4c1d95)”,icon:“❤️”,title:“壽險 & 意外險”,sub:“身故・意外・日額”,
+content:(
+<>
+<Fld label="壽險身故保額（萬）">    <FI value={prot.lifeInsurance}         onChange={sp(“lifeInsurance”)}         suf=“萬”/></Fld>
+<Fld label="壽險年度保費（元）">    <FI value={prot.lifeInsurancePremium}  onChange={sp(“lifeInsurancePremium”)}  pre=”$”/></Fld>
+<Fld label="意外身故（萬）">        <FI value={prot.accidentDeath}         onChange={sp(“accidentDeath”)}         suf=“萬”/></Fld>
+<Fld label="意外實支（萬）">        <FI value={prot.accidentReal}          onChange={sp(“accidentReal”)}          suf=“萬”/></Fld>
+<Fld label="意外住院日額（元/日）"> <FI value={prot.accidentHospitalDaily} onChange={sp(“accidentHospitalDaily”)} suf=“元/日”/></Fld>
+<Fld label="意外險年度保費（元）">  <FI value={prot.accidentPremium}       onChange={sp(“accidentPremium”)}       pre=”$”/></Fld>
+</>
+)},
+{gradient:“linear-gradient(135deg,#be123c,#9f1239)”,icon:“⚡”,title:“重大傷病險”,sub:“一次給付保障”,
+content:(
+<>
+<Fld label="重大傷病一次金（萬）"><FI value={prot.criticalIllness} onChange={sp(“criticalIllness”)} suf=“萬”/></Fld>
+<Fld label="年度保費（元）">      <FI value={prot.criticalPremium} onChange={sp(“criticalPremium”)} pre=”$”/></Fld>
+<div style={{background:“rgba(225,29,72,0.08)”,border:“1px solid rgba(225,29,72,0.22)”,borderRadius:10,padding:12}}>
+<div style={{display:“flex”,gap:8}}>
+<span>⚠️</span>
+<p style={{color:”#9f1239”,fontSize:12,fontWeight:600,lineHeight:1.6}}>22 類重症確診即理賠，建議備足 200 萬以上。</p>
+</div>
+</div>
+</>
+)},
+{gradient:“linear-gradient(135deg,#c2410c,#9a3412)”,icon:“⭐”,title:“癌症險”,sub:“一次金・化/放療”,
+content:(
+<>
+<Fld label="癌症一次金（萬）">       <FI value={prot.cancerLumpsum}   onChange={sp(“cancerLumpsum”)}   suf=“萬”/></Fld>
+<Fld label="化/放療補助金（元/日）"> <FI value={prot.cancerChemoDaily} onChange={sp(“cancerChemoDaily”)} suf=“元/日”/></Fld>
+<Fld label="年度保費（元）">         <FI value={prot.cancerPremium}   onChange={sp(“cancerPremium”)}   pre=”$”/></Fld>
+</>
+)},
+{gradient:“linear-gradient(135deg,#047857,#065f46)”,icon:“🏆”,title:“長照險”,sub:“一次金・月扶助金”,
+content:(
+<>
+<Fld label="長照一次金（萬）">  <FI value={prot.ltcLumpsum} onChange={sp(“ltcLumpsum”)} suf=“萬”/></Fld>
+<Fld label="月扶助金（元/月）"><FI value={prot.ltcMonthly} onChange={sp(“ltcMonthly”)} suf=“元/月”/></Fld>
+<Fld label="年度保費（元）">   <FI value={prot.ltcPremium} onChange={sp(“ltcPremium”)} pre=”$”/></Fld>
+</>
+)},
+{gradient:“linear-gradient(135deg,#b45309,#92400e)”,icon:“💰”,title:“保障彙總”,sub:“即時成本”,
+content:(
+<div style={{display:“flex”,flexDirection:“column”,gap:12}}>
+{[
+{label:“壽險 & 意外”,val:nv(prot.lifeInsurancePremium)+nv(prot.accidentPremium),col:”#a78bfa”},
+{label:“醫療險”,     val:nv(prot.medicalPremium),  col:”#60a5fa”},
+{label:“重大傷病”,   val:nv(prot.criticalPremium), col:”#fb7185”},
+{label:“癌症險”,     val:nv(prot.cancerPremium),   col:”#fb923c”},
+{label:“長照險”,     val:nv(prot.ltcPremium),      col:”#34d399”},
+].map(r=>(
+<div key={r.label} style={{display:“flex”,justifyContent:“space-between”,alignItems:“center”}}>
+<span style={{color:C.s500,fontWeight:600,fontSize:14}}>{r.label}</span>
+<span style={{color:r.col,fontWeight:900,fontSize:17}}>{r.val>0?$(r.val):”—”}</span>
+</div>
+))}
+<div style={{borderTop:`1px solid ${C.s200}`,paddingTop:12,marginTop:4}}>
+<div style={{display:“flex”,justifyContent:“space-between”,alignItems:“center”}}>
+<span style={{color:C.s900,fontWeight:900,fontSize:18}}>年度總計</span>
+<span style={{color:C.amber,fontWeight:900,fontSize:26}}>{$(totalPremium)}</span>
+</div>
+{income>0&&<div style={{color:C.s400,fontSize:12,textAlign:“right”,marginTop:4}}>佔月收入 {((totalPremium/12/income)*100).toFixed(1)}%</div>}
+</div>
+<button onClick={()=>setShowRep(true)} style={{width:“100%”,height:52,marginTop:4,background:“linear-gradient(135deg,#d97706,#f59e0b)”,color:C.s900,fontWeight:900,fontSize:17,border:“none”,borderRadius:14,cursor:“pointer”,display:“flex”,alignItems:“center”,justifyContent:“center”,gap:8,boxShadow:“0 4px 14px rgba(217,119,6,0.4)”}}>
+📄 查看完整報告
+</button>
+</div>
+)},
+];
+
+return(
+<div style={{minHeight:“100vh”,background:“linear-gradient(160deg,#eef2ff 0%,#f1f5f9 50%,#f0fdf4 100%)”}}>
+
+```
+  {/* Nav */}
+  <div style={{background:"linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95)",padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 4px 24px rgba(0,0,0,0.25)",position:"sticky",top:0,zIndex:100}}>
+    <div style={{display:"flex",alignItems:"center",gap:10}}>
+      <div style={{background:"rgba(255,255,255,0.15)",borderRadius:12,width:44,height:44,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🛡️</div>
+      <div>
+        <div style={{color:C.white,fontWeight:900,fontSize:18}}>FinGuard Pro</div>
+        <div className="nav-sub" style={{color:"#a5b4fc",fontSize:11,fontWeight:500}}>數位銀行等級財務診斷系統</div>
+      </div>
+    </div>
+    <div style={{display:"flex",alignItems:"center",gap:10}}>
+      {totalPremium>0&&(
+        <div className="nav-premium" style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:12,padding:"6px 14px",textAlign:"center"}}>
+          <div style={{color:"#a5b4fc",fontSize:10,fontWeight:600}}>年度總保障成本</div>
+          <div style={{color:C.white,fontWeight:900,fontSize:17}}>{$(totalPremium)}</div>
+        </div>
+      )}
+      <button onClick={()=>setShowRep(true)} style={{height:44,padding:"0 16px",background:C.white,color:"#312e81",fontWeight:900,fontSize:14,border:"none",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 14px rgba(0,0,0,0.2)",whiteSpace:"nowrap"}}>
+        📄 生成報告
+      </button>
+    </div>
+  </div>
+
+  <div style={{maxWidth:1200,margin:"0 auto",padding:"16px 16px",display:"flex",flexDirection:"column",gap:16}}>
+
+    {/* Client Info */}
+    <div style={{...cardSt,borderLeft:`8px solid ${C.indigo}`}}>
+      <div className="sec-pad">
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+          <div style={{background:"#eef2ff",borderRadius:12,width:42,height:42,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>👤</div>
+          <h2 style={{color:C.s900,fontWeight:900,fontSize:20}}>客戶基本資料</h2>
+          {age>0&&<span style={{background:C.indigo,color:C.white,fontWeight:900,fontSize:14,padding:"3px 12px",borderRadius:20,marginLeft:4,whiteSpace:"nowrap"}}>{age} 歲</span>}
+        </div>
+        <div className="grid-client">
+          <div style={gCell}><label style={lblSt}>姓名</label><TI value={client.name} onChange={sc("name")} placeholder="請輸入姓名"/></div>
+          <div style={gCell}><label style={lblSt}>出生日期</label><TI type="date" value={client.birthdate} onChange={sc("birthdate")}/></div>
+          <div style={gCell}><label style={lblSt}>性別</label><SI value={client.gender} onChange={sc("gender")} opts={[{value:"",label:"請選擇"},{value:"male",label:"男性"},{value:"female",label:"女性"}]}/></div>
+          <div style={gCell}><label style={lblSt}>職業</label><TI value={client.occupation} onChange={sc("occupation")} placeholder="例：工程師"/></div>
+          <div style={gCell}><label style={lblSt}>聯絡電話</label><TI value={client.phone} onChange={sc("phone")} placeholder="0912-345-678"/></div>
+          <div style={gCell}><label style={lblSt}>扶養人數</label><SI value={client.dependents} onChange={sc("dependents")} opts={["0","1","2","3","4","5+"].map(v=>({value:v,label:`${v} 人`}))}/></div>
         </div>
       </div>
     </div>
-  );
-};
 
-// ─── Main App ─────────────────────────────────────────────────────────────────
-export default function App() {
-  const [client, setClient] = useState<ClientInfo>(initClient);
-  const [protection, setProtection] = useState<ProtectionData>(initProtection);
-  const [showReport, setShowReport] = useState(false);
-
-  const setC = (k: keyof ClientInfo) => (v: string) =>
-    setClient((prev) => ({ ...prev, [k]: v }));
-  const setP = (k: keyof ProtectionData) => (v: string) =>
-    setProtection((prev) => ({ ...prev, [k]: v as never }));
-  const setMed = (k: keyof MedicalCoverage) => (v: string) =>
-    setProtection((prev) => ({
-      ...prev,
-      medicalCoverage: { ...prev.medicalCoverage, [k]: v },
-    }));
-
-  const age = calcAge(client.birthdate);
-  const income = num(client.monthlyIncome);
-  const expense = num(client.monthlyExpense);
-  const monthlySave = income - expense;
-  const savingsRate = income > 0 ? (monthlySave / income) * 100 : 0;
-
-  const totalPremium =
-    num(protection.lifeInsurancePremium) +
-    num(protection.accidentPremium) +
-    num(protection.criticalPremium) +
-    num(protection.cancerPremium) +
-    num(protection.ltcPremium) +
-    num(protection.medicalPremium);
-
-  if (showReport)
-    return (
-      <ReportPage
-        client={client}
-        protection={protection}
-        onBack={() => setShowReport(false)}
-      />
-    );
-
-  return (
-    <div className="min-h-screen bg-slate-100">
-      {/* Top Nav */}
-      <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 px-8 py-5 flex items-center justify-between shadow-2xl">
-        <div className="flex items-center gap-4">
-          <div className="bg-white/15 rounded-2xl p-2.5">
-            <Shield className="text-white" size={28} />
-          </div>
-          <div>
-            <div className="text-white font-black text-2xl tracking-tight">
-              FinGuard Pro
-            </div>
-            <div className="text-indigo-200 text-sm font-medium">
-              數位銀行等級財務診斷系統
-            </div>
-          </div>
+    {/* Finance */}
+    <div style={{...cardSt,borderLeft:`8px solid ${C.violet}`}}>
+      <div className="sec-pad">
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+          <div style={{background:"#f5f3ff",borderRadius:12,width:42,height:42,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>📈</div>
+          <h2 style={{color:C.s900,fontWeight:900,fontSize:20}}>財務診斷</h2>
         </div>
-        <div className="flex items-center gap-4">
-          {totalPremium > 0 && (
-            <div className="bg-white/10 border border-white/20 rounded-2xl px-5 py-2.5 text-center">
-              <div className="text-indigo-200 text-xs font-semibold">
-                年度總保障成本
-              </div>
-              <div className="text-white font-black text-2xl">
-                ${totalPremium.toLocaleString("zh-TW")}
-              </div>
-            </div>
-          )}
-          <button
-            onClick={() => setShowReport(true)}
-            className="flex items-center gap-2 bg-white text-indigo-900 font-black text-lg h-14 px-6 rounded-2xl 
-              hover:bg-indigo-50 active:bg-indigo-100 transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            <FileText size={20} />
-            生成報告
-            <ChevronRight size={18} />
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* ── Section 1: Client Info ────────────────────────────────────── */}
-        <SectionCard>
-          <div className="flex">
-            {/* Color bar */}
-            <div className="w-2.5 bg-indigo-600 rounded-l-2xl flex-shrink-0" />
-            <div className="flex-1 p-7">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-indigo-100 rounded-xl p-2">
-                  <User className="text-indigo-600" size={22} />
-                </div>
-                <h2 className="text-slate-900 font-black text-2xl">
-                  客戶基本資料
-                </h2>
-                {age > 0 && (
-                  <span className="ml-2 bg-indigo-600 text-white font-black text-lg px-4 py-1.5 rounded-full">
-                    {age} 歲
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-3 gap-x-6 gap-y-5">
-                <div>
-                  <FieldLabel>姓名</FieldLabel>
-                  <TextInput
-                    value={client.name}
-                    onChange={setC("name")}
-                    placeholder="請輸入姓名"
-                  />
-                </div>
-                <div>
-                  <FieldLabel>出生日期</FieldLabel>
-                  <TextInput
-                    type="date"
-                    value={client.birthdate}
-                    onChange={setC("birthdate")}
-                  />
-                </div>
-                <div>
-                  <FieldLabel>性別</FieldLabel>
-                  <BigSelect
-                    value={client.gender}
-                    onChange={setC("gender")}
-                    options={[
-                      { value: "", label: "請選擇" },
-                      { value: "male", label: "男性" },
-                      { value: "female", label: "女性" },
-                    ]}
-                  />
-                </div>
-                <div>
-                  <FieldLabel>職業</FieldLabel>
-                  <TextInput
-                    value={client.occupation}
-                    onChange={setC("occupation")}
-                    placeholder="例：工程師、教師"
-                  />
-                </div>
-                <div>
-                  <FieldLabel>聯絡電話</FieldLabel>
-                  <TextInput
-                    value={client.phone}
-                    onChange={setC("phone")}
-                    placeholder="0912-345-678"
-                  />
-                </div>
-                <div>
-                  <FieldLabel>扶養人數</FieldLabel>
-                  <BigSelect
-                    value={client.dependents}
-                    onChange={setC("dependents")}
-                    options={["0", "1", "2", "3", "4", "5+"].map((v) => ({
-                      value: v,
-                      label: `${v} 人`,
-                    }))}
-                  />
-                </div>
-              </div>
-            </div>
+        {/* On mobile: 1 col stack; on desktop: 2 col */}
+        <div className="grid-2">
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+            <div style={gCell}><label style={lblSt}>月收入（元）</label><FI value={client.monthlyIncome} onChange={sc("monthlyIncome")} pre="$"/></div>
+            <div style={gCell}><label style={lblSt}>月支出（元）</label><FI value={client.monthlyExpense} onChange={sc("monthlyExpense")} pre="$"/></div>
+            <div style={gCell}><label style={lblSt}>現有儲蓄（元）</label><FI value={client.savings} onChange={sc("savings")} pre="$"/></div>
           </div>
-        </SectionCard>
-
-        {/* ── Section 2: Financial Diagnosis ───────────────────────────── */}
-        <SectionCard>
-          <div className="flex">
-            <div className="w-2.5 bg-violet-600 rounded-l-2xl flex-shrink-0" />
-            <div className="flex-1 p-7">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-violet-100 rounded-xl p-2">
-                  <TrendingUp className="text-violet-600" size={22} />
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+            <div style={gCell}><label style={lblSt}>預計退休年齡</label><SI value={client.retirementAge} onChange={sc("retirementAge")} opts={[55,58,60,62,65,67,70].map(v=>({value:String(v),label:`${v} 歲`}))}/></div>
+            {income>0&&(
+              <div style={{background:"linear-gradient(135deg,#faf5ff,#f0fdf4)",border:`1px solid ${C.s200}`,borderRadius:14,padding:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                  <span style={{color:C.s900,fontWeight:900,fontSize:16}}>收支比分析</span>
+                  <span style={{fontWeight:900,fontSize:15,color:savingsRate>=20?C.emerald:C.rose}}>儲蓄率 {savingsRate.toFixed(1)}%</span>
                 </div>
-                <h2 className="text-slate-900 font-black text-2xl">
-                  財務診斷
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-5">
-                  <div>
-                    <FieldLabel>月收入（元）</FieldLabel>
-                    <BigInput
-                      value={client.monthlyIncome}
-                      onChange={setC("monthlyIncome")}
-                      prefix="$"
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel>月支出（元）</FieldLabel>
-                    <BigInput
-                      value={client.monthlyExpense}
-                      onChange={setC("monthlyExpense")}
-                      prefix="$"
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel>現有儲蓄（元）</FieldLabel>
-                    <BigInput
-                      value={client.savings}
-                      onChange={setC("savings")}
-                      prefix="$"
-                    />
-                  </div>
+                <div style={{height:18,background:C.s200,borderRadius:999,overflow:"hidden",display:"flex"}}>
+                  <div style={{width:`${Math.min((expense/income)*100,100)}%`,background:"linear-gradient(90deg,#f43f5e,#fb7185)",transition:"width .5s"}}/>
+                  <div style={{width:`${Math.max(savingsRate,0)}%`,background:"linear-gradient(90deg,#10b981,#34d399)",transition:"width .5s"}}/>
                 </div>
-                <div className="space-y-5">
-                  <div>
-                    <FieldLabel>預計退休年齡</FieldLabel>
-                    <BigSelect
-                      value={client.retirementAge}
-                      onChange={setC("retirementAge")}
-                      options={[55, 58, 60, 62, 65, 67, 70].map((v) => ({
-                        value: String(v),
-                        label: `${v} 歲`,
-                      }))}
-                    />
-                  </div>
-                  {/* Income / Expense Ratio Bar */}
-                  {income > 0 && (
-                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
-                      <div className="flex justify-between mb-3">
-                        <span className="text-slate-900 font-black text-lg">
-                          收支比分析
-                        </span>
-                        <span
-                          className={`font-black text-lg ${savingsRate >= 20 ? "text-emerald-600" : "text-rose-600"}`}
-                        >
-                          儲蓄率 {savingsRate.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="h-5 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full flex">
-                          <div
-                            className="bg-gradient-to-r from-rose-400 to-rose-500 transition-all duration-500"
-                            style={{
-                              width: `${Math.min((expense / income) * 100, 100)}%`,
-                            }}
-                          />
-                          <div
-                            className="bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500"
-                            style={{ width: `${Math.max(savingsRate, 0)}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-4 mt-3 text-sm font-semibold">
-                        <span className="flex items-center gap-1.5 text-rose-600">
-                          <span className="w-3 h-3 rounded-full bg-rose-400 inline-block" />
-                          支出 ${expense.toLocaleString("zh-TW")}
-                        </span>
-                        <span className="flex items-center gap-1.5 text-emerald-600">
-                          <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
-                          月儲 ${monthlySave.toLocaleString("zh-TW")}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                <div style={{display:"flex",gap:14,marginTop:8,fontSize:13,fontWeight:600,flexWrap:"wrap"}}>
+                  <span style={{color:C.rose}}>🔴 支出 {$(expense)}</span>
+                  <span style={{color:C.emerald}}>🟢 月儲 {$(monthlySave)}</span>
                 </div>
-              </div>
-            </div>
-          </div>
-        </SectionCard>
-
-        {/* ── Section 3: Protection ─────────────────────────────────────── */}
-        <div>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="bg-slate-900 rounded-xl p-2">
-              <Shield className="text-white" size={22} />
-            </div>
-            <h2 className="text-slate-900 font-black text-2xl">保障防禦系統</h2>
-            {totalPremium > 0 && (
-              <div className="ml-auto flex items-center gap-2 bg-slate-900 text-white font-black text-xl px-5 py-2 rounded-xl">
-                <DollarSign size={20} />
-                年度總保費：${totalPremium.toLocaleString("zh-TW")}
               </div>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-5">
-            {/* Medical */}
-            <ProtectionCard
-              color="bg-gradient-to-br from-blue-600 to-blue-800"
-              icon={<Activity className="text-white" size={24} />}
-              title="醫療險"
-              subtitle="住院 · 手術 · 雜費"
-            >
-              <div>
-                <FieldLabel>住院定額（元/日）</FieldLabel>
-                <BigInput
-                  value={protection.medicalCoverage.hospitalDaily}
-                  onChange={setMed("hospitalDaily")}
-                  suffix="元"
-                />
-              </div>
-              <div>
-                <FieldLabel>住院實支（萬）</FieldLabel>
-                <BigInput
-                  value={protection.medicalCoverage.hospitalReal}
-                  onChange={setMed("hospitalReal")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>手術給付（萬）</FieldLabel>
-                <BigInput
-                  value={protection.medicalCoverage.surgery}
-                  onChange={setMed("surgery")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>
-                  <span className="text-rose-600">⬤</span> 醫療雜費（萬）
-                  <span className="text-rose-600 text-base ml-1">
-                    ← 關鍵項目
-                  </span>
-                </FieldLabel>
-                <div className="relative">
-                  <BigInput
-                    value={protection.medicalCoverage.medicalMisc}
-                    onChange={setMed("medicalMisc")}
-                    suffix="萬"
-                  />
-                  <div className="absolute inset-0 rounded-xl ring-2 ring-rose-400 pointer-events-none" />
-                </div>
-              </div>
-              <div>
-                <FieldLabel>年度保費（元）</FieldLabel>
-                <BigInput
-                  value={protection.medicalPremium}
-                  onChange={setP("medicalPremium")}
-                  prefix="$"
-                />
-              </div>
-            </ProtectionCard>
-
-            {/* Life & Accident */}
-            <ProtectionCard
-              color="bg-gradient-to-br from-purple-600 to-purple-800"
-              icon={<Heart className="text-white" size={24} />}
-              title="壽險 & 意外險"
-              subtitle="身故 · 失能 · 意外實支"
-            >
-              <div>
-                <FieldLabel>壽險身故保額（萬）</FieldLabel>
-                <BigInput
-                  value={protection.lifeInsurance}
-                  onChange={setP("lifeInsurance")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>壽險年度保費（元）</FieldLabel>
-                <BigInput
-                  value={protection.lifeInsurancePremium}
-                  onChange={setP("lifeInsurancePremium")}
-                  prefix="$"
-                />
-              </div>
-              <div>
-                <FieldLabel>意外身故保額（萬）</FieldLabel>
-                <BigInput
-                  value={protection.accidentDeath}
-                  onChange={setP("accidentDeath")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>意外實支（萬）</FieldLabel>
-                <BigInput
-                  value={protection.accidentReal}
-                  onChange={setP("accidentReal")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>意外險年度保費（元）</FieldLabel>
-                <BigInput
-                  value={protection.accidentPremium}
-                  onChange={setP("accidentPremium")}
-                  prefix="$"
-                />
-              </div>
-            </ProtectionCard>
-
-            {/* Critical Illness */}
-            <ProtectionCard
-              color="bg-gradient-to-br from-rose-600 to-rose-800"
-              icon={<Zap className="text-white" size={24} />}
-              title="重大傷病險"
-              subtitle="一次給付保障"
-            >
-              <div>
-                <FieldLabel>重大傷病一次金（萬）</FieldLabel>
-                <BigInput
-                  value={protection.criticalIllness}
-                  onChange={setP("criticalIllness")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>重大傷病年度保費（元）</FieldLabel>
-                <BigInput
-                  value={protection.criticalPremium}
-                  onChange={setP("criticalPremium")}
-                  prefix="$"
-                />
-              </div>
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="text-rose-500 mt-0.5 flex-shrink-0" size={18} />
-                  <div className="text-rose-700 text-sm font-semibold">
-                    重大傷病卡含 22 類重症，確診即理賠，建議備足 2～3 年收入替代。
-                  </div>
-                </div>
-              </div>
-            </ProtectionCard>
-
-            {/* Cancer */}
-            <ProtectionCard
-              color="bg-gradient-to-br from-orange-500 to-orange-700"
-              icon={<Star className="text-white" size={24} />}
-              title="癌症險"
-              subtitle="一次金 · 化療補助"
-            >
-              <div>
-                <FieldLabel>癌症一次金（萬）</FieldLabel>
-                <BigInput
-                  value={protection.cancerLumpsum}
-                  onChange={setP("cancerLumpsum")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>化療/標靶補助（元/次）</FieldLabel>
-                <BigInput
-                  value={protection.cancerChemo}
-                  onChange={setP("cancerChemo")}
-                  suffix="元"
-                />
-              </div>
-              <div>
-                <FieldLabel>癌症險年度保費（元）</FieldLabel>
-                <BigInput
-                  value={protection.cancerPremium}
-                  onChange={setP("cancerPremium")}
-                  prefix="$"
-                />
-              </div>
-            </ProtectionCard>
-
-            {/* LTC */}
-            <ProtectionCard
-              color="bg-gradient-to-br from-emerald-600 to-emerald-800"
-              icon={<Award className="text-white" size={24} />}
-              title="長照險"
-              subtitle="一次金 · 月扶助金"
-            >
-              <div>
-                <FieldLabel>長照一次金（萬）</FieldLabel>
-                <BigInput
-                  value={protection.ltcLumpsum}
-                  onChange={setP("ltcLumpsum")}
-                  suffix="萬"
-                />
-              </div>
-              <div>
-                <FieldLabel>月扶助金（元/月）</FieldLabel>
-                <BigInput
-                  value={protection.ltcMonthly}
-                  onChange={setP("ltcMonthly")}
-                  suffix="元"
-                />
-              </div>
-              <div>
-                <FieldLabel>長照險年度保費（元）</FieldLabel>
-                <BigInput
-                  value={protection.ltcPremium}
-                  onChange={setP("ltcPremium")}
-                  prefix="$"
-                />
-              </div>
-            </ProtectionCard>
-
-            {/* Summary Card */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-md border border-slate-700 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-              <div className="bg-gradient-to-br from-amber-500 to-yellow-600 px-5 py-4 flex items-center gap-3">
-                <div className="bg-white/20 rounded-xl p-2">
-                  <DollarSign className="text-white" size={24} />
-                </div>
-                <div>
-                  <div className="text-white font-black text-xl">保障彙總</div>
-                  <div className="text-white/80 text-sm font-medium">
-                    即時成本計算
-                  </div>
-                </div>
-              </div>
-              <div className="p-5 space-y-3">
-                {[
-                  {
-                    label: "壽險 & 意外",
-                    val: protection.lifeInsurancePremium,
-                    val2: protection.accidentPremium,
-                    color: "text-purple-400",
-                  },
-                  {
-                    label: "醫療險",
-                    val: protection.medicalPremium,
-                    color: "text-blue-400",
-                  },
-                  {
-                    label: "重大傷病",
-                    val: protection.criticalPremium,
-                    color: "text-rose-400",
-                  },
-                  {
-                    label: "癌症險",
-                    val: protection.cancerPremium,
-                    color: "text-orange-400",
-                  },
-                  {
-                    label: "長照險",
-                    val: protection.ltcPremium,
-                    color: "text-emerald-400",
-                  },
-                ].map((row) => {
-                  const v =
-                    num(row.val ?? "") + num((row as { val2?: string }).val2 ?? "");
-                  return (
-                    <div key={row.label} className="flex justify-between items-center">
-                      <span className="text-slate-400 font-semibold">
-                        {row.label}
-                      </span>
-                      <span className={`${row.color} font-black text-lg`}>
-                        {v > 0 ? `$${v.toLocaleString("zh-TW")}` : "—"}
-                      </span>
-                    </div>
-                  );
-                })}
-                <div className="border-t border-slate-700 pt-3 mt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white font-black text-xl">
-                      年度總計
-                    </span>
-                    <span className="text-amber-400 font-black text-3xl">
-                      ${totalPremium.toLocaleString("zh-TW")}
-                    </span>
-                  </div>
-                  {income > 0 && (
-                    <div className="text-slate-500 text-sm mt-1 text-right">
-                      佔月收入{" "}
-                      {((totalPremium / 12 / income) * 100).toFixed(1)}%
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => setShowReport(true)}
-                  className="w-full h-14 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-black text-xl 
-                    rounded-xl hover:from-amber-400 hover:to-yellow-400 active:scale-[0.98] transition-all duration-200 
-                    flex items-center justify-center gap-2 shadow-lg mt-2"
-                >
-                  <FileText size={20} />
-                  查看完整報告
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
-
-        {/* Bottom padding */}
-        <div className="h-8" />
       </div>
     </div>
-  );
+
+    {/* Protection */}
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{background:C.s900,borderRadius:12,width:44,height:44,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🛡️</div>
+          <h2 style={{color:C.s900,fontWeight:900,fontSize:22}}>保障防禦系統</h2>
+        </div>
+        {totalPremium>0&&(
+          <div style={{background:C.s900,color:C.white,fontWeight:900,fontSize:15,padding:"8px 16px",borderRadius:12,display:"flex",alignItems:"center",gap:6}}>
+            💰 {$(totalPremium)}
+          </div>
+        )}
+      </div>
+      <div className="grid-prot">
+        {pcards.map(pc=>(
+          <PC key={pc.title} gradient={pc.gradient} icon={pc.icon} title={pc.title} sub={pc.sub}>
+            {pc.content}
+          </PC>
+        ))}
+      </div>
+    </div>
+
+    <div style={{height:24}}/>
+  </div>
+</div>
+```
+
+);
 }
