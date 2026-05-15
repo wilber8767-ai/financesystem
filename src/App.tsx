@@ -412,7 +412,7 @@ return(
     {/* ── BLOCK 1：退休財務缺口 ─────────────────────────────────────── */}
     <DarkBox style={{padding:0}}>
       <div className="sec-pad">
-        <RptHeader icon="🔥" title="退休財務缺口診斷" sub={`通膨複利 2.5% · 退休後 ${RET_YEARS} 年需求試算（平均餘命 85 歲）`}/>
+        <RptHeader icon="🔥" title="退休財務缺口診斷" sub={"通膨複利 2.5% · 退休後 " + RET_YEARS + " 年需求試算（平均餘命 85 歲）"}/>
 
         {/* 3 formula cards */}
         <div className="grid-formula" style={{marginBottom:16}}>
